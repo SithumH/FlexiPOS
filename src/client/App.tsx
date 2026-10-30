@@ -6,25 +6,44 @@ import { CartTable } from './components/CartTable.js';
 import { CheckoutModal } from './components/CheckoutModal.js';
 import { CreditBookModal } from './components/CreditBookModal.js';
 import { ReceiptModal } from './components/ReceiptModal.js';
-import { SettingsModal } from './components/SettingsModal.js';
+import { ShopAdminPanel } from './components/admin/ShopAdminPanel.js';
+import { SuperAdminPanel } from './components/superadmin/SuperAdminPanel.js';
 import { POSProduct, POSCartItem, POSCustomer, OfflineOrderQueueItem } from './types/pos.js';
 import { ShopSettings, DEFAULT_SHOP_SETTINGS } from './types/settings.js';
 import { INITIAL_PRODUCTS, INITIAL_CUSTOMERS } from './data/sampleData.js';
 import { localDb } from './db/offlineDb.js';
+import { Language, translations } from './i18n/translations.js';
 
 export const App: React.FC = () => {
+  // Bilingual Language State
+  const [lang, setLang] = useState<Language>(() => {
+    return (localStorage.getItem('flexipos_lang') as Language) || 'si';
+  });
+
+  const toggleLanguage = () => {
+    setLang((prev) => {
+      const next = prev === 'si' ? 'en' : 'si';
+      localStorage.setItem('flexipos_lang', next);
+      return next;
+    });
+  };
+
+  // Active Panel: Cashier POS vs Shop Admin vs Super Admin
+  const [activePanel, setActivePanel] = useState<'CASHIER' | 'ADMIN' | 'SUPER_ADMIN'>('CASHIER');
+
+  // Core Data
   const [products, setProducts] = useState<POSProduct[]>(INITIAL_PRODUCTS);
   const [customers, setCustomers] = useState<POSCustomer[]>(INITIAL_CUSTOMERS);
+  const [orders, setOrders] = useState<OfflineOrderQueueItem[]>([]);
   const [cart, setCart] = useState<POSCartItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<POSCustomer | null>(null);
   const [discount, setDiscount] = useState<number>(0);
 
-  // Shop Settings & User Roles
+  // Shop Settings
   const [settings, setSettings] = useState<ShopSettings>(() => {
     const saved = localStorage.getItem('flexipos_settings');
     return saved ? JSON.parse(saved) : DEFAULT_SHOP_SETTINGS;
   });
-  const [userRole, setUserRole] = useState<'SUPER_ADMIN' | 'ADMIN' | 'CASHIER'>('ADMIN');
 
   // Connectivity & Sync state
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
@@ -33,7 +52,6 @@ export const App: React.FC = () => {
   // Modals
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isCreditBookOpen, setIsCreditBookOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<OfflineOrderQueueItem | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -58,10 +76,10 @@ export const App: React.FC = () => {
           setCustomers(storedCust);
         }
 
-        const pending = await localDb.pendingOrders
-          .where('syncStatus')
-          .equals('PENDING')
-          .toArray();
+        const allOrders = await localDb.pendingOrders.toArray();
+        setOrders(allOrders);
+
+        const pending = allOrders.filter((o) => o.syncStatus === 'PENDING');
         setPendingOrders(pending);
       } catch (e) {
         console.error('Dexie IndexedDB initialization error:', e);
@@ -71,7 +89,7 @@ export const App: React.FC = () => {
     initDb();
 
     const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOffline = () => setIsOffline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
@@ -81,9 +99,11 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Global Keyboard Shortcuts
+  // Keyboard Shortcuts for Cashier
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (activePanel !== 'CASHIER') return;
+
       if (e.key === 'F2') {
         e.preventDefault();
         searchInputRef.current?.focus();
@@ -96,19 +116,28 @@ export const App: React.FC = () => {
       } else if (e.key === 'Escape') {
         setIsCheckoutOpen(false);
         setIsCreditBookOpen(false);
-        setIsSettingsOpen(false);
         setCompletedOrder(null);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [cart]);
+  }, [cart, activePanel]);
 
   // Save Settings handler
   const handleSaveSettings = (newSettings: ShopSettings) => {
     setSettings(newSettings);
     localStorage.setItem('flexipos_settings', JSON.stringify(newSettings));
+  };
+
+  // Add Product from Shop Admin
+  const handleAddProduct = async (prodData: Omit<POSProduct, 'id'>) => {
+    const newProd: POSProduct = {
+      id: `p-${Date.now()}`,
+      ...prodData
+    };
+    setProducts((prev) => [newProd, ...prev]);
+    await localDb.products.put(newProd);
   };
 
   // Cart operations
@@ -208,14 +237,14 @@ export const App: React.FC = () => {
       await localDb.customers.put(updatedCust);
     }
 
-    // Save order in local IndexedDB
+    // Save order in local IndexedDB and update order list
     await localDb.pendingOrders.put(newOrder);
+    setOrders((prev) => [newOrder, ...prev]);
 
     if (!isOnline) {
       setPendingOrders((prev) => [newOrder, ...prev]);
     }
 
-    // Reset current sale state & show receipt
     setIsCheckoutOpen(false);
     handleClearCart();
     setCompletedOrder(newOrder);
@@ -250,74 +279,94 @@ export const App: React.FC = () => {
   // Trigger sync of pending offline orders
   const handleSyncNow = async () => {
     if (!isOnline) {
-      alert('Sync කිරීමට පෙර කරුණාකර Internet සම්බන්ධතාවය සක්‍රීය කරන්න (Go Online)');
+      alert(lang === 'si' ? 'Sync කිරීමට පෙර Internet සක්‍රීය කරන්න' : 'Enable Internet before syncing');
       return;
     }
 
     await localDb.pendingOrders.where('syncStatus').equals('PENDING').modify({ syncStatus: 'SYNCED' });
     setPendingOrders([]);
-    alert('Offline බිල්පත් සියල්ල සාර්ථකව Cloud Server වෙත Sync විය!');
+    alert(translations[lang].syncSuccess);
   };
 
-  // Custom Quick Items from shop settings
-  const quickItems = products.filter((p) =>
-    settings.quickItemProductIds.includes(p.id)
-  );
-
+  // Filter Quick items
+  const quickItems = products.filter((p) => settings.quickItemProductIds.includes(p.id));
   const cartSubtotal = cart.reduce((acc, item) => acc + item.totalPrice, 0);
   const cartNetTotal = Math.max(0, cartSubtotal - discount);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-100 overflow-hidden select-none">
-      {/* 1. Header Navigation with Store Custom Name & Settings */}
+      {/* 1. Master Header with 3 Panels Switcher & Language Switcher */}
       <Header
+        lang={lang}
+        onToggleLang={toggleLanguage}
+        activePanel={activePanel}
+        onChangePanel={setActivePanel}
         isOnline={isOnline}
         onToggleOnline={() => setIsOnline((prev) => !prev)}
         pendingSyncCount={pendingOrders.length}
         onSyncNow={handleSyncNow}
         onOpenCreditBook={() => setIsCreditBookOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        cashierName="බණ්ඩාර මුදලාලි"
         storeName={settings.storeName}
         storeNameSi={settings.storeNameSi}
-        userRole={userRole}
       />
 
-      {/* 2. Main Workspace Layout */}
-      <div className="flex-1 grid grid-cols-12 gap-3 p-3 min-h-0 overflow-hidden">
-        {/* Left Side: Catalog & Quick Tiles (7 cols on lg) */}
-        <div className="col-span-7 flex flex-col gap-3 min-h-0">
-          {/* Quick Tiles configured by shop admin */}
-          <div className="h-[210px] shrink-0">
-            <QuickItemTiles items={quickItems} onSelectItem={handleAddToCart} />
+      {/* 2. PANEL 1: CASHIER BILLING SCREEN */}
+      {activePanel === 'CASHIER' && (
+        <div className="flex-1 grid grid-cols-12 gap-3 p-3 min-h-0 overflow-hidden">
+          {/* Left Side: Catalog & Quick Tiles */}
+          <div className="col-span-7 flex flex-col gap-3 min-h-0">
+            {/* Quick Tiles for loose items (පාන්, බිත්තර, සීනි) */}
+            <div className="h-[210px] shrink-0">
+              <QuickItemTiles items={quickItems} onSelectItem={handleAddToCart} />
+            </div>
+
+            {/* Searchable Product Catalog */}
+            <div className="flex-1 min-h-0">
+              <ProductCatalog
+                products={products}
+                onSelectItem={handleAddToCart}
+                searchInputRef={searchInputRef}
+              />
+            </div>
           </div>
 
-          {/* Full Searchable Product Catalog */}
-          <div className="flex-1 min-h-0">
-            <ProductCatalog
-              products={products}
-              onSelectItem={handleAddToCart}
-              searchInputRef={searchInputRef}
+          {/* Right Side: Active Bill / Cart */}
+          <div className="col-span-5 flex flex-col min-h-0">
+            <CartTable
+              cart={cart}
+              selectedCustomer={selectedCustomer}
+              onUpdateQty={handleUpdateQty}
+              onRemoveItem={handleRemoveItem}
+              onClearCart={handleClearCart}
+              onOpenCreditCustomerModal={() => setIsCreditBookOpen(true)}
+              onOpenCheckout={() => setIsCheckoutOpen(true)}
+              discount={discount}
             />
           </div>
         </div>
+      )}
 
-        {/* Right Side: Active Bill / Cart (5 cols on lg) */}
-        <div className="col-span-5 flex flex-col min-h-0">
-          <CartTable
-            cart={cart}
-            selectedCustomer={selectedCustomer}
-            onUpdateQty={handleUpdateQty}
-            onRemoveItem={handleRemoveItem}
-            onClearCart={handleClearCart}
-            onOpenCreditCustomerModal={() => setIsCreditBookOpen(true)}
-            onOpenCheckout={() => setIsCheckoutOpen(true)}
-            discount={discount}
-          />
-        </div>
-      </div>
+      {/* 3. PANEL 2: SHOP ADMIN PANEL */}
+      {activePanel === 'ADMIN' && (
+        <ShopAdminPanel
+          lang={lang}
+          settings={settings}
+          onSaveSettings={handleSaveSettings}
+          products={products}
+          onAddProduct={handleAddProduct}
+          customers={customers}
+          onAddCustomer={handleAddCustomer}
+          onRecordCreditPayment={handleRecordCreditPayment}
+          orders={orders}
+        />
+      )}
 
-      {/* 3. Modals */}
+      {/* 4. PANEL 3: SUPER ADMIN PLATFORM MASTER */}
+      {activePanel === 'SUPER_ADMIN' && (
+        <SuperAdminPanel lang={lang} />
+      )}
+
+      {/* Shared Modals */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
@@ -340,16 +389,6 @@ export const App: React.FC = () => {
         onClose={() => setCompletedOrder(null)}
         order={completedOrder}
         settings={settings}
-      />
-
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        settings={settings}
-        onSaveSettings={handleSaveSettings}
-        allProducts={products}
-        userRole={userRole}
-        onSwitchRole={(newRole) => setUserRole(newRole)}
       />
     </div>
   );

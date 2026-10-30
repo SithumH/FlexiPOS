@@ -1,106 +1,127 @@
 import React from 'react';
-import { Wifi, WifiOff, RefreshCw, User, Store, BookOpen, Settings } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw, Store, Globe, ShoppingCart, UserCheck, Shield } from 'lucide-react';
+import { Language, translations } from '../i18n/translations.js';
 
 interface HeaderProps {
+  lang: Language;
+  onToggleLang: () => void;
+  activePanel: 'CASHIER' | 'ADMIN' | 'SUPER_ADMIN';
+  onChangePanel: (panel: 'CASHIER' | 'ADMIN' | 'SUPER_ADMIN') => void;
   isOnline: boolean;
   onToggleOnline: () => void;
   pendingSyncCount: number;
   onSyncNow: () => void;
   onOpenCreditBook: () => void;
-  onOpenSettings: () => void;
-  cashierName: string;
   storeName: string;
   storeNameSi?: string;
-  userRole: 'SUPER_ADMIN' | 'ADMIN' | 'CASHIER';
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  lang,
+  onToggleLang,
+  activePanel,
+  onChangePanel,
   isOnline,
   onToggleOnline,
   pendingSyncCount,
   onSyncNow,
   onOpenCreditBook,
-  onOpenSettings,
-  cashierName,
   storeName,
-  storeNameSi,
-  userRole
+  storeNameSi
 }) => {
+  const t = translations[lang];
+
   return (
-    <header className="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between shadow-md">
-      {/* Left: Shop Branding */}
+    <header className="bg-slate-900 text-white px-4 py-2 flex items-center justify-between border-b border-slate-800 shrink-0">
+      {/* 1. Left: Brand & Shop Identity */}
       <div className="flex items-center space-x-3">
-        <div className="bg-emerald-600 text-white p-2 rounded-lg flex items-center justify-center font-bold">
-          <Store className="w-5 h-5 mr-1.5" />
-          <span>FlexiPOS</span>
+        <div className="bg-emerald-600 text-white p-1.5 rounded-lg flex items-center font-bold">
+          <Store className="w-5 h-5 mr-1" />
+          <span className="text-sm tracking-tight font-black">FlexiPOS</span>
         </div>
         <div>
-          <h1 className="font-bold text-base tracking-wide flex items-center gap-2">
-            <span>{storeNameSi || storeName}</span>
-            <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/40">
-              {userRole === 'SUPER_ADMIN' ? 'Platform Master' : 'Grocery V1.0'}
-            </span>
+          <h1 className="font-bold text-sm tracking-tight flex items-center gap-1.5 text-white">
+            <span>{lang === 'si' && storeNameSi ? storeNameSi : storeName}</span>
           </h1>
-          <p className="text-xs text-slate-400">{storeName} • Terminal #01</p>
+          <p className="text-[11px] text-slate-400">{t.terminal}</p>
         </div>
       </div>
 
-      {/* Center: Quick Action Buttons */}
-      <div className="flex items-center space-x-3">
-        {/* ණය පොත Quick Access Button */}
+      {/* 2. Center: 3 Clean Role Navigation Panels */}
+      <div className="flex items-center bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
         <button
-          onClick={onOpenCreditBook}
-          className="flex items-center space-x-2 bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-1.5 rounded-lg text-sm font-semibold shadow transition"
-          title="F4: ණය පොත විවෘත කරන්න"
+          onClick={() => onChangePanel('CASHIER')}
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            activePanel === 'CASHIER'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+          }`}
         >
-          <BookOpen className="w-4 h-4" />
-          <span>ණය පොත (F4)</span>
+          <ShoppingCart className="w-3.5 h-3.5" />
+          <span>{t.cashierPanel}</span>
         </button>
 
-        {/* Offline / Online Simulator Switch */}
+        <button
+          onClick={() => onChangePanel('ADMIN')}
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            activePanel === 'ADMIN'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+          }`}
+        >
+          <UserCheck className="w-3.5 h-3.5" />
+          <span>{t.adminPanel}</span>
+        </button>
+
+        <button
+          onClick={() => onChangePanel('SUPER_ADMIN')}
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            activePanel === 'SUPER_ADMIN'
+              ? 'bg-amber-600 text-white shadow-sm'
+              : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+          }`}
+        >
+          <Shield className="w-3.5 h-3.5" />
+          <span>{t.superAdminPanel}</span>
+        </button>
+      </div>
+
+      {/* 3. Right: Utility Controls (Language, Sync, Online/Offline) */}
+      <div className="flex items-center space-x-2.5">
+        {/* Offline / Online Button */}
         <button
           onClick={onToggleOnline}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
+          className={`flex items-center space-x-1 px-2.5 py-1 rounded-md text-xs font-semibold border transition ${
             isOnline
-              ? 'bg-emerald-950/80 text-emerald-400 border-emerald-600/50 hover:bg-emerald-900'
-              : 'bg-rose-950/80 text-rose-400 border-rose-600/50 hover:bg-rose-900'
+              ? 'bg-slate-800 text-emerald-400 border-slate-700 hover:bg-slate-700'
+              : 'bg-rose-950/80 text-rose-300 border-rose-700/80 hover:bg-rose-900'
           }`}
-          title="Click to simulate Internet disconnect / reconnect"
+          title="Click to toggle Network simulation"
         >
-          {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-          <span>{isOnline ? 'Online (Connected)' : 'Offline Mode (Local Storage)'}</span>
+          {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
+          <span>{isOnline ? t.online : t.offline}</span>
         </button>
 
-        {/* Pending Sync Queue Badge */}
+        {/* Pending Sync badge */}
         {pendingSyncCount > 0 && (
           <button
             onClick={onSyncNow}
-            className="flex items-center space-x-1.5 bg-sky-900/80 text-sky-300 border border-sky-600/50 hover:bg-sky-800 px-2.5 py-1.5 rounded-lg text-xs font-semibold animate-pulse"
-            title="Pending orders ready to sync"
+            className="flex items-center space-x-1 bg-amber-900/60 text-amber-300 border border-amber-600/50 px-2 py-1 rounded-md text-xs font-semibold hover:bg-amber-800"
+            title="Click to push offline sales to server"
           >
-            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            <span>{pendingSyncCount} Sync Pending</span>
+            <RefreshCw className="w-3 h-3 animate-spin" />
+            <span>{pendingSyncCount}</span>
           </button>
         )}
-      </div>
 
-      {/* Right: Cashier Info & Settings Button */}
-      <div className="flex items-center space-x-2 text-sm">
-        <div className="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
-          <User className="w-4 h-4 text-emerald-400" />
-          <span className="text-slate-200 font-medium">
-            {cashierName} ({userRole})
-          </span>
-        </div>
-
-        {/* Settings button (Admin / Super Admin) */}
+        {/* 1-Click Bilingual Language Switcher */}
         <button
-          onClick={onOpenSettings}
-          className="flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-2.5 py-1.5 rounded-lg border border-slate-700 transition"
-          title="කඩේ සැකසුම් (Settings & Customization)"
+          onClick={onToggleLang}
+          className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded-md text-xs font-bold text-slate-200 transition"
+          title="Switch Language (සිංහල / English)"
         >
-          <Settings className="w-4 h-4 text-slate-300" />
-          <span className="text-xs font-semibold">සැකසුම්</span>
+          <Globe className="w-3.5 h-3.5 text-emerald-400" />
+          <span>{lang === 'si' ? 'ENG' : 'සිංහල'}</span>
         </button>
       </div>
     </header>
