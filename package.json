@@ -11,8 +11,13 @@
     "build:client": "vite build",
     "start": "node dist/server/server.js",
     "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [
     "pos",

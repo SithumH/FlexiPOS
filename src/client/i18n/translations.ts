@@ -176,3 +176,4 @@ export const translations = {
     managePlan: 'Manage Plan'
   }
 };
+

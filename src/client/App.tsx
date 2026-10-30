@@ -8,8 +8,10 @@ import { CreditBookModal } from './components/CreditBookModal.js';
 import { ReceiptModal } from './components/ReceiptModal.js';
 import { ShopAdminPanel } from './components/admin/ShopAdminPanel.js';
 import { SuperAdminPanel } from './components/superadmin/SuperAdminPanel.js';
+import { LoginScreen } from './components/auth/LoginScreen.js';
 import { POSProduct, POSCartItem, POSCustomer, OfflineOrderQueueItem } from './types/pos.js';
 import { ShopSettings, DEFAULT_SHOP_SETTINGS } from './types/settings.js';
+import { CurrentUserSession } from './types/auth.js';
 import { INITIAL_PRODUCTS, INITIAL_CUSTOMERS } from './data/sampleData.js';
 import { localDb } from './db/offlineDb.js';
 import { Language, translations } from './i18n/translations.js';
@@ -27,6 +29,12 @@ export const App: React.FC = () => {
       return next;
     });
   };
+
+  // Auth User Session State
+  const [currentUser, setCurrentUser] = useState<CurrentUserSession | null>(() => {
+    const saved = localStorage.getItem('flexipos_session');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   // Active Panel: Cashier POS vs Shop Admin vs Super Admin
   const [activePanel, setActivePanel] = useState<'CASHIER' | 'ADMIN' | 'SUPER_ADMIN'>('CASHIER');
@@ -55,6 +63,26 @@ export const App: React.FC = () => {
   const [completedOrder, setCompletedOrder] = useState<OfflineOrderQueueItem | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle Login Success
+  const handleLoginSuccess = (session: CurrentUserSession) => {
+    setCurrentUser(session);
+    localStorage.setItem('flexipos_session', JSON.stringify(session));
+    if (session.role === 'SUPER_ADMIN') {
+      setActivePanel('SUPER_ADMIN');
+    } else if (session.role === 'ADMIN') {
+      setActivePanel('ADMIN');
+    } else {
+      setActivePanel('CASHIER');
+    }
+  };
+
+  // Handle Logout
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('flexipos_session');
+    handleClearCart();
+  };
 
   // Initialize Local Database on startup
   useEffect(() => {
@@ -101,9 +129,9 @@ export const App: React.FC = () => {
 
   // Keyboard Shortcuts for Cashier
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (activePanel !== 'CASHIER') return;
+    if (!currentUser || activePanel !== 'CASHIER') return;
 
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F2') {
         e.preventDefault();
         searchInputRef.current?.focus();
@@ -122,7 +150,7 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [cart, activePanel]);
+  }, [cart, activePanel, currentUser]);
 
   // Save Settings handler
   const handleSaveSettings = (newSettings: ShopSettings) => {
@@ -226,7 +254,6 @@ export const App: React.FC = () => {
       syncStatus: isOnline ? 'SYNCED' : 'PENDING'
     };
 
-    // Update customer debt if ණයට දුන්නා නම්
     if (isCredit && selectedCustomer) {
       const updatedBalance = selectedCustomer.currentBalance + total;
       const updatedCust = { ...selectedCustomer, currentBalance: updatedBalance };
@@ -237,7 +264,6 @@ export const App: React.FC = () => {
       await localDb.customers.put(updatedCust);
     }
 
-    // Save order in local IndexedDB and update order list
     await localDb.pendingOrders.put(newOrder);
     setOrders((prev) => [newOrder, ...prev]);
 
@@ -250,7 +276,6 @@ export const App: React.FC = () => {
     setCompletedOrder(newOrder);
   };
 
-  // Credit repayment from modal
   const handleRecordCreditPayment = async (customerId: string, amount: number) => {
     setCustomers((prev) =>
       prev.map((c) => {
@@ -265,7 +290,6 @@ export const App: React.FC = () => {
     );
   };
 
-  // Add new customer to ණය පොත
   const handleAddCustomer = async (custData: Omit<POSCustomer, 'id' | 'currentBalance'>) => {
     const newCust: POSCustomer = {
       id: `cust-${Date.now()}`,
@@ -276,7 +300,6 @@ export const App: React.FC = () => {
     await localDb.customers.put(newCust);
   };
 
-  // Trigger sync of pending offline orders
   const handleSyncNow = async () => {
     if (!isOnline) {
       alert(lang === 'si' ? 'Sync කිරීමට පෙර Internet සක්‍රීය කරන්න' : 'Enable Internet before syncing');
@@ -288,6 +311,17 @@ export const App: React.FC = () => {
     alert(translations[lang].syncSuccess);
   };
 
+  // If user is not logged in, show clean Login Screen
+  if (!currentUser) {
+    return (
+      <LoginScreen
+        lang={lang}
+        onToggleLang={toggleLanguage}
+        onLoginSuccess={handleLoginSuccess}
+      />
+    );
+  }
+
   // Filter Quick items
   const quickItems = products.filter((p) => settings.quickItemProductIds.includes(p.id));
   const cartSubtotal = cart.reduce((acc, item) => acc + item.totalPrice, 0);
@@ -295,7 +329,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-100 overflow-hidden select-none">
-      {/* 1. Master Header with 3 Panels Switcher & Language Switcher */}
+      {/* 1. Master Header with 3 Panels Switcher & Language Switcher & Logout */}
       <Header
         lang={lang}
         onToggleLang={toggleLanguage}
@@ -308,6 +342,8 @@ export const App: React.FC = () => {
         onOpenCreditBook={() => setIsCreditBookOpen(true)}
         storeName={settings.storeName}
         storeNameSi={settings.storeNameSi}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       {/* 2. PANEL 1: CASHIER BILLING SCREEN */}

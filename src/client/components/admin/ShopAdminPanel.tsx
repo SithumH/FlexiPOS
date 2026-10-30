@@ -798,3 +798,4 @@ export const ShopAdminPanel: React.FC<ShopAdminPanelProps> = ({
     </div>
   );
 };
+
