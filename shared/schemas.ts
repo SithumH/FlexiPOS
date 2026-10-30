@@ -61,10 +61,10 @@ export const createOrderSchema = z.object({
   isCreditSale: z.boolean().default(false),
   localClientId: z.string().optional(),
   createdAt: z.string().datetime().optional(),
-  items: z.array(orderItemSchema).min(1, 'Order must contain at least one item')
+  items: z.array(orderItemSchema).min(1, 'Order must contain at least one item').max(500, 'Order item count exceeds maximum allowed limit')
 });
 
 export const syncOrdersBatchSchema = z.object({
-  orders: z.array(createOrderSchema)
+  orders: z.array(createOrderSchema).max(200, 'Batch order sync count exceeds limit of 200 items per request')
 });
 

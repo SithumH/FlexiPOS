@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import { config } from '../config/env.js';
 
 export const errorHandler = (
   err: any,
@@ -8,7 +9,7 @@ export const errorHandler = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction
 ): void => {
-  // Handle Zod Schema Validation Errors
+  // 1. Handle Zod Schema Validation Errors (Safe to return client field errors)
   if (err instanceof ZodError) {
     res.status(400).json({
       success: false,
@@ -21,20 +22,46 @@ export const errorHandler = (
     return;
   }
 
-  // Handle Syntax Error in JSON Body
+  // 2. Handle Malformed JSON payload
   if (err instanceof SyntaxError && 'body' in err) {
     res.status(400).json({
       success: false,
-      message: 'Malformed JSON payload in request body'
+      message: 'Invalid JSON format in request body'
     });
     return;
   }
 
-  // General server error
-  console.error('[Unhandled Error]:', err);
+  // 3. Security: Sanitize Database / Prisma errors to prevent internal schema & connection string leaks
+  const isPrismaError =
+    err.name === 'PrismaClientKnownRequestError' ||
+    err.name === 'PrismaClientValidationError' ||
+    err.name === 'PrismaClientInitializationError';
+
+  console.error('[Server Error Security Log]:', {
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl,
+    method: req.method,
+    ip: req.ip,
+    name: err.name,
+    message: err.message
+  });
+
+  if (isPrismaError) {
+    res.status(400).json({
+      success: false,
+      message: 'Database operation failed or validation constraint was violated'
+    });
+    return;
+  }
+
+  // 4. In production, never return raw internal error messages
+  const safeMessage =
+    config.nodeEnv === 'production'
+      ? 'An unexpected internal error occurred'
+      : err.message || 'Internal server error';
+
   res.status(err.status || 500).json({
     success: false,
-    message: err.message || 'Internal server error occurred'
+    message: safeMessage
   });
 };
-

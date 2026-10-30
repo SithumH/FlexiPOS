@@ -82,10 +82,10 @@ export class OrdersService {
         }
       });
 
-      // 4. Update Stock Movements & Current Stock for each item
+      // 4. Update Stock Movements & Current Stock for each item (strictly tenant-isolated)
       for (const item of data.items) {
-        const product = await tx.product.findUnique({
-          where: { id: item.productId }
+        const product = await tx.product.findFirst({
+          where: { id: item.productId, businessId }
         });
 
         if (product) {
@@ -110,11 +110,11 @@ export class OrdersService {
         }
       }
 
-      // 5. If this is a Credit Sale (ණයට දීම), record in ණය පොත
+      // 5. If this is a Credit Sale (ණයට දීම), record in ණය පොත (strictly tenant-isolated)
       const isCredit = data.isCreditSale || data.paymentMethod === 'CREDIT';
       if (isCredit && data.customerId) {
-        const customer = await tx.customer.findUnique({
-          where: { id: data.customerId }
+        const customer = await tx.customer.findFirst({
+          where: { id: data.customerId, businessId }
         });
 
         if (customer) {

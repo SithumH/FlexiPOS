@@ -7,7 +7,6 @@ export interface UserAccount {
   role: UserRole;
   shopId?: string;
   shopName?: string;
-  pinOrPassword?: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -17,13 +16,10 @@ export interface CurrentUserSession {
   fullName: string;
   username: string;
   role: UserRole;
+  token?: string;
   shopId?: string;
   shopName?: string;
 }
 
-// Hardcoded Super Admin Credentials (as requested)
-export const SUPER_ADMIN_CREDENTIALS = {
-  username: 'superadmin',
-  password: 'admin'
-};
-
+// Client-side default username for master developer convenience
+export const SUPER_ADMIN_USERNAME = 'superadmin';

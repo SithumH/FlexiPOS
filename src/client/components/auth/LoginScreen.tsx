@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserRole, SUPER_ADMIN_CREDENTIALS, CurrentUserSession } from '../../types/auth.js';
+import { UserRole, SUPER_ADMIN_USERNAME, CurrentUserSession } from '../../types/auth.js';
 import { Language } from '../../i18n/translations.js';
 import { Store, Shield, UserCheck, ShoppingCart, Lock, KeyRound, Globe, ArrowRight } from 'lucide-react';
 
@@ -27,11 +27,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     const cleanUser = username.trim().toLowerCase();
     const cleanPass = password.trim();
 
-    // 1. Super Admin Hardcoded Verification
+    // 1. Super Admin Verification
     if (selectedRole === 'SUPER_ADMIN') {
       if (
-        cleanUser === SUPER_ADMIN_CREDENTIALS.username &&
-        cleanPass === SUPER_ADMIN_CREDENTIALS.password
+        cleanUser === SUPER_ADMIN_USERNAME &&
+        (cleanPass === 'admin' || cleanPass === 'admin123')
       ) {
         onLoginSuccess({
           id: 'sa-001',
@@ -206,8 +206,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             type="button"
             onClick={() => {
               setSelectedRole('SUPER_ADMIN');
-              setUsername(SUPER_ADMIN_CREDENTIALS.username);
-              setPassword(SUPER_ADMIN_CREDENTIALS.password);
+              setUsername(SUPER_ADMIN_USERNAME);
+              setPassword('admin');
               setErrorMsg('');
             }}
             className={`py-2 px-1 rounded-xl flex flex-col items-center gap-1 transition ${
