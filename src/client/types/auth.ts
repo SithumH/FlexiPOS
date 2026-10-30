@@ -26,3 +26,4 @@ export const SUPER_ADMIN_CREDENTIALS = {
   username: 'superadmin',
   password: 'admin'
 };
+
