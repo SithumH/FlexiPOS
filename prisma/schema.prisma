@@ -1,0 +1,264 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN // FlexiPOS Platform Developer / SaaS Owner
+  ADMIN       // Shop Owner (කඩේ මුදලාලි)
+  MANAGER     // Branch / Shift Manager
+  CASHIER     // Counter Staff (බිල් දමන සේවකයා)
+}
+
+enum UnitType {
+  UNIT
+  KG
+  G
+  L
+  ML
+  PACKET
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  LANKAQR
+  CREDIT
+  SPLIT
+}
+
+enum CreditType {
+  DEBIT   // Customer borrowed goods on credit (+balance)
+  CREDIT  // Customer made a payment (-balance)
+}
+
+enum MovementType {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RETURN
+  DAMAGE
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+}
+
+model Business {
+  id                 String              @id @default(uuid()) @db.Uuid
+  name               String
+  tradeName          String?
+  phone              String?
+  address            String?
+  currency           String              @default("LKR")
+  taxNumber          String?
+  settings           Json?               @default("{}")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  users              User[]
+  categories         Category[]
+  products           Product[]
+  customers          Customer[]
+  creditTransactions CreditTransaction[]
+  orders             Order[]
+  stockMovements     StockMovement[]
+  shifts             Shift[]
+
+  @@map("businesses")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  businessId   String    @map("business_id") @db.Uuid
+  fullName     String    @map("full_name")
+  username     String
+  passwordHash String    @map("password_hash")
+  role         Role      @default(CASHIER)
+  phone        String?
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  business     Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  orders       Order[]
+  shifts       Shift[]
+
+  @@unique([businessId, username])
+  @@index([businessId])
+  @@map("users")
+}
+
+model Category {
+  id         String    @id @default(uuid()) @db.Uuid
+  businessId String    @map("business_id") @db.Uuid
+  name       String
+  nameSi     String?   @map("name_si")
+  colorCode  String?   @default("#10B981") @map("color_code")
+  sortOrder  Int       @default(0) @map("sort_order")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  products   Product[]
+
+  @@index([businessId])
+  @@map("categories")
+}
+
+model Product {
+  id             String          @id @default(uuid()) @db.Uuid
+  businessId     String          @map("business_id") @db.Uuid
+  categoryId     String?         @map("category_id") @db.Uuid
+  barcode        String?
+  name           String
+  nameSi         String?         @map("name_si")
+  unit           UnitType        @default(UNIT)
+  costPrice      Decimal         @default(0.00) @map("cost_price") @db.Decimal(10, 2)
+  sellingPrice   Decimal         @map("selling_price") @db.Decimal(10, 2)
+  currentStock   Decimal         @default(0.000) @map("current_stock") @db.Decimal(10, 3)
+  minStockAlert  Decimal         @default(5.000) @map("min_stock_alert") @db.Decimal(10, 3)
+  isQuickItem    Boolean         @default(false) @map("is_quick_item")
+  isActive       Boolean         @default(true) @map("is_active")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  business       Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category       Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  orderItems     OrderItem[]
+  stockMovements StockMovement[]
+
+  @@index([businessId])
+  @@index([businessId, barcode])
+  @@index([businessId, isQuickItem])
+  @@map("products")
+}
+
+model Customer {
+  id                 String              @id @default(uuid()) @db.Uuid
+  businessId         String              @map("business_id") @db.Uuid
+  name               String
+  phone              String
+  address            String?
+  creditLimit        Decimal             @default(10000.00) @map("credit_limit") @db.Decimal(10, 2)
+  currentBalance     Decimal             @default(0.00) @map("current_balance") @db.Decimal(10, 2)
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  business           Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  orders             Order[]
+  creditTransactions CreditTransaction[]
+
+  @@index([businessId])
+  @@index([businessId, phone])
+  @@map("customers")
+}
+
+model CreditTransaction {
+  id           String     @id @default(uuid()) @db.Uuid
+  businessId   String     @map("business_id") @db.Uuid
+  customerId   String     @map("customer_id") @db.Uuid
+  orderId      String?    @map("order_id") @db.Uuid
+  type         CreditType
+  amount       Decimal    @db.Decimal(10, 2)
+  balanceAfter Decimal    @map("balance_after") @db.Decimal(10, 2)
+  notes        String?
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  business     Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer     Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  order        Order?     @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([businessId])
+  @@index([customerId])
+  @@map("credit_transactions")
+}
+
+model Order {
+  id                 String              @id @default(uuid()) @db.Uuid
+  businessId         String              @map("business_id") @db.Uuid
+  cashierId          String              @map("cashier_id") @db.Uuid
+  customerId         String?             @map("customer_id") @db.Uuid
+  invoiceNumber      String              @map("invoice_number")
+  paymentMethod      PaymentMethod       @default(CASH) @map("payment_method")
+  subtotal           Decimal             @db.Decimal(10, 2)
+  discount           Decimal             @default(0.00) @db.Decimal(10, 2)
+  total              Decimal             @db.Decimal(10, 2)
+  amountPaid         Decimal             @map("amount_paid") @db.Decimal(10, 2)
+  changeGiven        Decimal             @default(0.00) @map("change_given") @db.Decimal(10, 2)
+  isCreditSale       Boolean             @default(false) @map("is_credit_sale")
+  syncStatus         String              @default("SYNCED") @map("sync_status")
+  localClientId      String?             @map("local_client_id")
+  createdAt          DateTime            @default(now()) @map("created_at")
+
+  business           Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  cashier            User                @relation(fields: [cashierId], references: [id])
+  customer           Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items              OrderItem[]
+  creditTransactions CreditTransaction[]
+
+  @@unique([businessId, invoiceNumber])
+  @@index([businessId])
+  @@index([businessId, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  orderId     String   @map("order_id") @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  productName String   @map("product_name")
+  quantity    Decimal  @db.Decimal(10, 3)
+  unitPrice   Decimal  @map("unit_price") @db.Decimal(10, 2)
+  totalPrice  Decimal  @map("total_price") @db.Decimal(10, 2)
+
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model StockMovement {
+  id              String       @id @default(uuid()) @db.Uuid
+  businessId      String       @map("business_id") @db.Uuid
+  productId       String       @map("product_id") @db.Uuid
+  movementType    MovementType @map("movement_type")
+  quantityChanged Decimal      @map("quantity_changed") @db.Decimal(10, 3)
+  newStockLevel   Decimal      @map("new_stock_level") @db.Decimal(10, 3)
+  reason          String?
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  business        Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  product         Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([productId])
+  @@map("stock_movements")
+}
+
+model Shift {
+  id             String      @id @default(uuid()) @db.Uuid
+  businessId     String      @map("business_id") @db.Uuid
+  cashierId      String      @map("cashier_id") @db.Uuid
+  openedAt       DateTime    @default(now()) @map("opened_at")
+  closedAt       DateTime?   @map("closed_at")
+  openingCash    Decimal     @map("opening_cash") @db.Decimal(10, 2)
+  expectedCash   Decimal?    @map("expected_cash") @db.Decimal(10, 2)
+  actualCash     Decimal?    @map("actual_cash") @db.Decimal(10, 2)
+  cashDifference Decimal?    @map("cash_difference") @db.Decimal(10, 2)
+  status         ShiftStatus @default(OPEN)
+  notes          String?
+
+  business       Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  cashier        User        @relation(fields: [cashierId], references: [id])
+
+  @@index([businessId])
+  @@index([cashierId])
+  @@map("shifts")
+}
+
