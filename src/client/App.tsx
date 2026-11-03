@@ -6,6 +6,7 @@ import { CartTable } from './components/CartTable.js';
 import { CheckoutModal } from './components/CheckoutModal.js';
 import { CreditBookModal } from './components/CreditBookModal.js';
 import { ReceiptModal } from './components/ReceiptModal.js';
+import { WeightModal } from './components/WeightModal.js';
 import { ShopAdminPanel } from './components/admin/ShopAdminPanel.js';
 import { SuperAdminPanel } from './components/superadmin/SuperAdminPanel.js';
 import { LoginScreen } from './components/auth/LoginScreen.js';
@@ -61,8 +62,19 @@ export const App: React.FC = () => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isCreditBookOpen, setIsCreditBookOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<OfflineOrderQueueItem | null>(null);
+  const [weighingProduct, setWeighingProduct] = useState<POSProduct | null>(null);
+
+  // Live Clock
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Handle Login Success
   const handleLoginSuccess = (session: CurrentUserSession) => {
@@ -117,7 +129,7 @@ export const App: React.FC = () => {
     initDb();
 
     const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOffline(false);
+    const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
@@ -132,7 +144,10 @@ export const App: React.FC = () => {
     if (!currentUser || activePanel !== 'CASHIER') return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'F2') {
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setActivePanel('CASHIER');
+      } else if (e.key === 'F2') {
         e.preventDefault();
         searchInputRef.current?.focus();
       } else if (e.key === 'F4') {
@@ -145,6 +160,7 @@ export const App: React.FC = () => {
         setIsCheckoutOpen(false);
         setIsCreditBookOpen(false);
         setCompletedOrder(null);
+        setWeighingProduct(null);
       }
     };
 
@@ -168,15 +184,24 @@ export const App: React.FC = () => {
     await localDb.products.put(newProd);
   };
 
-  // Cart operations
-  const handleAddToCart = (product: POSProduct) => {
+  // Item Selection (Triggers Weight Modal for loose items like rice, sugar, vegetables)
+  const handleSelectItem = (product: POSProduct) => {
+    if (product.unit === 'KG' || product.unit === 'G') {
+      setWeighingProduct(product);
+    } else {
+      handleAddToCart(product, 1);
+    }
+  };
+
+  // Add to Cart
+  const handleAddToCart = (product: POSProduct, quantity: number = 1) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
-        const newQty = existing.quantity + 1;
+        const newQty = existing.quantity + quantity;
         return prev.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: newQty, totalPrice: newQty * item.unitPrice }
+            ? { ...item, quantity: newQty, totalPrice: Math.round(newQty * item.unitPrice) }
             : item
         );
       } else {
@@ -184,9 +209,9 @@ export const App: React.FC = () => {
           ...prev,
           {
             product,
-            quantity: 1,
+            quantity,
             unitPrice: product.sellingPrice,
-            totalPrice: product.sellingPrice
+            totalPrice: Math.round(quantity * product.sellingPrice)
           }
         ];
       }
@@ -203,7 +228,7 @@ export const App: React.FC = () => {
             return {
               ...item,
               quantity: newQty,
-              totalPrice: newQty * item.unitPrice
+              totalPrice: Math.round(newQty * item.unitPrice)
             };
           }
           return item;
@@ -311,7 +336,7 @@ export const App: React.FC = () => {
     alert(translations[lang].syncSuccess);
   };
 
-  // If user is not logged in, show clean Login Screen
+  // If user is not logged in, show traditional Login Screen
   if (!currentUser) {
     return (
       <LoginScreen
@@ -328,8 +353,8 @@ export const App: React.FC = () => {
   const cartNetTotal = Math.max(0, cartSubtotal - discount);
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-100 overflow-hidden select-none">
-      {/* 1. Master Header with 3 Panels Switcher & Language Switcher & Logout */}
+    <div className="h-screen w-screen flex flex-col bg-slate-300 overflow-hidden select-none font-sans">
+      {/* 1. Traditional Application Header */}
       <Header
         lang={lang}
         onToggleLang={toggleLanguage}
@@ -348,25 +373,25 @@ export const App: React.FC = () => {
 
       {/* 2. PANEL 1: CASHIER BILLING SCREEN */}
       {activePanel === 'CASHIER' && (
-        <div className="flex-1 grid grid-cols-12 gap-3 p-3 min-h-0 overflow-hidden">
-          {/* Left Side: Catalog & Quick Tiles */}
-          <div className="col-span-7 flex flex-col gap-3 min-h-0">
-            {/* Quick Tiles for loose items (පාන්, බිත්තර, සීනි) */}
-            <div className="h-[210px] shrink-0">
-              <QuickItemTiles items={quickItems} onSelectItem={handleAddToCart} />
+        <div className="flex-1 grid grid-cols-12 gap-2 p-2 min-h-0 overflow-hidden">
+          {/* Left Side (7 cols): Quick Touch Tiles & Searchable Product Catalog */}
+          <div className="col-span-7 flex flex-col gap-2 min-h-0">
+            {/* Quick Tiles for loose items (පාන්, බිත්තර, සීනි, පරිප්පු) */}
+            <div className="h-[185px] shrink-0">
+              <QuickItemTiles items={quickItems} onSelectItem={handleSelectItem} />
             </div>
 
             {/* Searchable Product Catalog */}
             <div className="flex-1 min-h-0">
               <ProductCatalog
                 products={products}
-                onSelectItem={handleAddToCart}
+                onSelectItem={handleSelectItem}
                 searchInputRef={searchInputRef}
               />
             </div>
           </div>
 
-          {/* Right Side: Active Bill / Cart */}
+          {/* Right Side (5 cols): Active Bill / POS Tabular Cart */}
           <div className="col-span-5 flex flex-col min-h-0">
             <CartTable
               cart={cart}
@@ -377,6 +402,8 @@ export const App: React.FC = () => {
               onOpenCreditCustomerModal={() => setIsCreditBookOpen(true)}
               onOpenCheckout={() => setIsCheckoutOpen(true)}
               discount={discount}
+              onSetDiscount={setDiscount}
+              onQuickPayMethod={() => setIsCheckoutOpen(true)}
             />
           </div>
         </div>
@@ -402,6 +429,26 @@ export const App: React.FC = () => {
         <SuperAdminPanel lang={lang} />
       )}
 
+      {/* 5. Traditional Desktop Status Strip at Bottom */}
+      <footer className="bg-slate-900 border-t-2 border-slate-700 px-3 py-1 flex items-center justify-between text-xs text-slate-300 font-mono select-none shrink-0">
+        <div className="flex items-center space-x-3">
+          <span className="text-emerald-400 font-bold flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>SYSTEM READY</span>
+          </span>
+          <span>•</span>
+          <span>TERMINAL: COUNTER-01</span>
+          <span>•</span>
+          <span>CASHIER: {currentUser.fullName}</span>
+          <span>•</span>
+          <span className="text-amber-400">SHORTCUTS: [F2] Search | [F4] ණය පොත | [F9] Pay | [ESC] Clear</span>
+        </div>
+        <div className="flex items-center space-x-3">
+          <span className="text-slate-400">{new Date().toLocaleDateString()}</span>
+          <span className="text-emerald-400 font-bold">{currentTime}</span>
+        </div>
+      </footer>
+
       {/* Shared Modals */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
@@ -418,6 +465,14 @@ export const App: React.FC = () => {
         onSelectCustomer={(cust) => setSelectedCustomer(cust)}
         onRecordPayment={handleRecordCreditPayment}
         onAddCustomer={handleAddCustomer}
+      />
+
+      <WeightModal
+        isOpen={!!weighingProduct}
+        onClose={() => setWeighingProduct(null)}
+        product={weighingProduct}
+        onConfirm={(prod, qty) => handleAddToCart(prod, qty)}
+        lang={lang}
       />
 
       <ReceiptModal

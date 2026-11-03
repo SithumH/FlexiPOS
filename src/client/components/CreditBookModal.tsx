@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { POSCustomer } from '../types/pos.js';
 import { formatLKR } from '../utils/formatters.js';
-import { BookOpen, Search, UserPlus, Phone, CheckCircle, ArrowDownCircle, X } from 'lucide-react';
+import { BookOpen, Search, UserPlus, Phone, Check, ArrowDownCircle, X } from 'lucide-react';
 
 interface CreditBookModalProps {
   isOpen: boolean;
@@ -73,257 +73,282 @@ export const CreditBookModal: React.FC<CreditBookModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        {/* Header */}
-        <div className="p-4 bg-amber-700 text-white flex items-center justify-between">
+    <div className="fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-3 select-none font-sans">
+      <div className="bg-white border-2 border-slate-700 shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden">
+        {/* Title Bar */}
+        <div className="bg-amber-800 text-white px-4 py-2.5 flex items-center justify-between border-b border-amber-900">
           <div className="flex items-center space-x-2">
             <BookOpen className="w-5 h-5 text-amber-200" />
-            <div>
-              <h3 className="font-bold text-base">ඩිජිටල් ණය පොත (Customer Credit Ledger)</h3>
-              <p className="text-xs text-amber-100">කඩේ මුළු ණය එකතුව: {formatLKR(totalShopCredit)}</p>
-            </div>
+            <h3 className="font-bold text-sm tracking-wide uppercase">
+              ඩිජිටල් ණය පොත (CUSTOMER CREDIT LEDGER) [F4]
+            </h3>
           </div>
           <button
             onClick={onClose}
-            className="text-amber-200 hover:text-white p-1 rounded-lg hover:bg-amber-800 transition"
+            className="text-amber-200 hover:text-white hover:bg-amber-900 p-1 transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-slate-200 bg-slate-50 px-4 pt-2">
+        {/* Ledger Summary Strip */}
+        <div className="bg-slate-900 text-white px-4 py-2 flex items-center justify-between font-mono text-xs border-b border-slate-800">
+          <span className="text-slate-400">මුළු ණය ගැතියන්: {customers.length}</span>
+          <div className="text-right">
+            <span className="text-[10px] text-amber-400 uppercase font-bold mr-2">
+              කඩේ මුළු ණය එකතුව:
+            </span>
+            <span className="text-base font-black text-amber-400 font-mono">
+              {formatLKR(totalShopCredit)}
+            </span>
+          </div>
+        </div>
+
+        {/* Traditional Folder Tabs */}
+        <div className="flex border-b border-slate-300 bg-slate-200 px-2 pt-1.5 space-x-1">
           <button
             onClick={() => setActiveTab('LIST')}
-            className={`pb-2 px-3 text-xs font-bold border-b-2 transition ${
+            className={`px-3 py-1.5 text-xs font-bold uppercase transition border-t border-l border-r ${
               activeTab === 'LIST'
-                ? 'border-amber-600 text-amber-800'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-white text-slate-900 border-slate-400 shadow-sm'
+                : 'bg-slate-300 text-slate-700 border-transparent hover:bg-slate-100'
             }`}
           >
             ණය ගනුදෙනුකරුවන් ({customers.length})
           </button>
+
           <button
             onClick={() => setActiveTab('ADD_CUSTOMER')}
-            className={`pb-2 px-3 text-xs font-bold border-b-2 transition flex items-center gap-1 ${
+            className={`px-3 py-1.5 text-xs font-bold uppercase transition border-t border-l border-r flex items-center gap-1 ${
               activeTab === 'ADD_CUSTOMER'
-                ? 'border-amber-600 text-amber-800'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-white text-slate-900 border-slate-400 shadow-sm'
+                : 'bg-slate-300 text-slate-700 border-transparent hover:bg-slate-100'
             }`}
           >
             <UserPlus className="w-3.5 h-3.5" />
-            <span>අලුත් කස්ටමර් (+ New)</span>
+            <span>+ නව පාරිභෝගිකයෙකු ඇතුළත් කිරීම</span>
           </button>
         </div>
 
-        {/* Body Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Body Content Area */}
+        <div className="flex-1 overflow-y-auto p-3 bg-slate-50">
           {activeTab === 'LIST' && (
-            <div className="space-y-3">
-              {/* Search input */}
+            <div className="space-y-2">
+              {/* Search Bar */}
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="නම හෝ දුරකථන අංකයෙන් සොයන්න (Search name or 07...)"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholder="පාරිභෝගිකයාගේ නම හෝ දුරකථන අංකය සොයන්න..."
+                  className="w-full pl-8 pr-3 py-1.5 border-2 border-slate-300 text-xs font-semibold focus:outline-none focus:border-amber-600 bg-white"
                   autoFocus
                 />
+                <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2" />
               </div>
 
-              {/* Customer List */}
-              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
-                {filteredCustomers.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-slate-400">
-                    ගනුදෙනුකරුවෙකු හමු නොවීය
-                  </div>
-                ) : (
-                  filteredCustomers.map((cust) => (
-                    <div
-                      key={cust.id}
-                      className="p-3 flex items-center justify-between hover:bg-slate-50 transition"
-                    >
-                      <div>
-                        <h4 className="font-bold text-xs text-slate-800">{cust.name}</h4>
-                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
-                          <span className="flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-slate-400" />
-                            {cust.phone}
-                          </span>
-                          <span>•</span>
-                          <span>සීමාව: {formatLKR(cust.creditLimit)}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <span className="text-[10px] text-slate-400 uppercase font-semibold block">
-                            දැනට ණය ශේෂය
-                          </span>
-                          <span
-                            className={`font-black text-sm ${
-                              cust.currentBalance > 0 ? 'text-amber-700' : 'text-slate-400'
-                            }`}
-                          >
-                            {formatLKR(cust.currentBalance)}
-                          </span>
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="flex items-center gap-1.5">
-                          {cust.currentBalance > 0 && (
+              {/* Traditional Tabular Ledger List */}
+              <div className="border border-slate-300 bg-white overflow-hidden">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-800 text-slate-200 text-[11px] font-bold uppercase">
+                    <tr>
+                      <th className="p-2 border-r border-slate-700">නම (Customer Name)</th>
+                      <th className="p-2 border-r border-slate-700">දුරකථන අංකය</th>
+                      <th className="p-2 border-r border-slate-700 text-right">ණය සීමාව</th>
+                      <th className="p-2 border-r border-slate-700 text-right">ණය ශේෂය (Balance)</th>
+                      <th className="p-2 text-center">ක්‍රියාමාර්ග</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 font-sans">
+                    {filteredCustomers.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-6 text-center text-slate-400 font-bold text-xs">
+                          කිසිදු පාරිභෝගිකයෙකු හමු නොවීය
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredCustomers.map((c) => (
+                        <tr key={c.id} className="hover:bg-amber-50/70 even:bg-slate-50">
+                          <td className="p-2 border-r border-slate-200 font-bold text-slate-900">
+                            {c.name}
+                          </td>
+                          <td className="p-2 border-r border-slate-200 font-mono text-slate-600">
+                            {c.phone}
+                          </td>
+                          <td className="p-2 border-r border-slate-200 text-right font-mono text-slate-500">
+                            {formatLKR(c.creditLimit)}
+                          </td>
+                          <td className="p-2 border-r border-slate-200 text-right font-mono font-bold text-rose-700">
+                            {formatLKR(c.currentBalance)}
+                          </td>
+                          <td className="p-1.5 text-center space-x-1">
                             <button
                               onClick={() => {
-                                setSelectedCustForPayment(cust);
-                                setPayAmountStr(cust.currentBalance.toString());
+                                onSelectCustomer(c);
+                                onClose();
+                              }}
+                              className="bg-emerald-700 hover:bg-emerald-800 text-white px-2 py-1 text-[11px] font-bold uppercase"
+                              title="Select for current bill"
+                            >
+                              තෝරන්න
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedCustForPayment(c);
                                 setActiveTab('PAY_CREDIT');
                               }}
-                              className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-semibold flex items-center gap-1"
-                              title="ණය මුදල් පියවීම"
+                              className="bg-amber-700 hover:bg-amber-800 text-white px-2 py-1 text-[11px] font-bold uppercase"
+                              title="Repay credit balance"
                             >
-                              <ArrowDownCircle className="w-3.5 h-3.5" />
-                              <span>ගෙවීම</span>
+                              ගෙවීම් භාරගැනීම
                             </button>
-                          )}
-                          <button
-                            onClick={() => {
-                              onSelectCustomer(cust);
-                              onClose();
-                            }}
-                            className="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm"
-                            title="බිලට සම්බන්ධ කරන්න"
-                          >
-                            <CheckCircle className="w-3.5 h-3.5" />
-                            <span>තෝරන්න</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
 
           {activeTab === 'ADD_CUSTOMER' && (
-            <form onSubmit={handleAddSubmit} className="space-y-3 max-w-md mx-auto py-2">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  ගනුදෙනුකරුගේ නම (Customer Name):
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="උදා: සුනිල් පෙරේරා"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-amber-500"
-                />
+            <form onSubmit={handleAddSubmit} className="space-y-3 bg-white p-4 border border-slate-300">
+              <h4 className="font-bold text-xs text-slate-800 uppercase border-b border-slate-200 pb-1.5">
+                නව ණය පාරිභෝගික විස්තර
+              </h4>
+              <div className="space-y-2 text-xs">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">සම්පූර්ණ නම *:</label>
+                  <input
+                    type="text"
+                    required
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    placeholder="e.g. කේ. සුනිල් පෙරේරා"
+                    className="w-full px-2.5 py-1.5 border border-slate-300 font-semibold focus:outline-none focus:border-amber-600"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">දුරකථන අංකය *:</label>
+                  <input
+                    type="tel"
+                    required
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    placeholder="0771234567"
+                    className="w-full px-2.5 py-1.5 border border-slate-300 font-mono font-semibold focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">ණය සීමාව (Credit Limit LKR):</label>
+                  <input
+                    type="number"
+                    value={newLimit}
+                    onChange={(e) => setNewLimit(e.target.value)}
+                    className="w-full px-2.5 py-1.5 border border-slate-300 font-mono font-semibold focus:outline-none focus:border-amber-600"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  දුරකථන අංකය (Phone Number):
-                </label>
-                <input
-                  type="tel"
-                  required
-                  placeholder="0771234567"
-                  value={newPhone}
-                  onChange={(e) => setNewPhone(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  ණය සීමාව (Credit Limit):
-                </label>
-                <input
-                  type="number"
-                  value={newLimit}
-                  onChange={(e) => setNewLimit(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="pt-2 flex justify-end space-x-2 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setActiveTab('LIST')}
-                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold text-slate-600"
+                  className="px-3 py-1.5 border border-slate-400 text-slate-700 font-bold text-xs uppercase"
                 >
-                  Cancel
+                  ආපසු
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold"
+                  className="px-4 py-1.5 bg-amber-800 text-white font-bold text-xs uppercase hover:bg-amber-900"
                 >
-                  පොතට ඇතුළත් කරන්න (Save Customer)
+                  සුරකින්න (Save Customer)
                 </button>
               </div>
             </form>
           )}
 
           {activeTab === 'PAY_CREDIT' && selectedCustForPayment && (
-            <form onSubmit={handlePaySubmit} className="space-y-4 max-w-md mx-auto py-2">
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                <h4 className="font-bold text-xs text-amber-900">{selectedCustForPayment.name}</h4>
-                <p className="text-xs text-amber-700">
-                  දැනට ගෙවිය යුතු මුළු ණය: <strong>{formatLKR(selectedCustForPayment.currentBalance)}</strong>
-                </p>
+            <form onSubmit={handlePaySubmit} className="space-y-3 bg-white p-4 border border-slate-300">
+              <h4 className="font-bold text-xs text-amber-900 uppercase border-b border-amber-200 pb-1.5">
+                ණය පියවීම / මුදල් භාරගැනීම (Credit Repayment)
+              </h4>
+
+              <div className="bg-amber-50 p-2.5 border border-amber-200 text-xs space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">පාරිභෝගිකයා:</span>
+                  <span className="font-bold text-slate-900">{selectedCustForPayment.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">දැනට පවතින ණය:</span>
+                  <span className="font-mono font-bold text-rose-600">
+                    {formatLKR(selectedCustForPayment.currentBalance)}
+                  </span>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  පියවන මුදල (Repayment Amount):
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={payAmountStr}
-                  onChange={(e) => setPayAmountStr(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-base font-bold text-emerald-700 focus:ring-2 focus:ring-emerald-500"
-                />
+              <div className="space-y-2 text-xs">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    ගෙවන මුදල (Amount Received LKR) *:
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    step="10"
+                    min="1"
+                    max={selectedCustForPayment.currentBalance}
+                    value={payAmountStr}
+                    onChange={(e) => setPayAmountStr(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full px-3 py-2 border-2 border-slate-400 text-base font-mono font-bold focus:outline-none focus:border-amber-600"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">සටහන (Notes / Receipt No):</label>
+                  <input
+                    type="text"
+                    value={payNotes}
+                    onChange={(e) => setPayNotes(e.target.value)}
+                    placeholder="e.g. මුදලින් ගෙවන ලදී"
+                    className="w-full px-2.5 py-1.5 border border-slate-300 text-xs focus:outline-none focus:border-amber-600"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  සටහන (Notes / Reason):
-                </label>
-                <input
-                  type="text"
-                  placeholder="උදා: Cash repayment for October groceries"
-                  value={payNotes}
-                  onChange={(e) => setPayNotes(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="pt-2 flex justify-end space-x-2 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setActiveTab('LIST')}
-                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold text-slate-600"
+                  className="px-3 py-1.5 border border-slate-400 text-slate-700 font-bold text-xs uppercase"
                 >
-                  Cancel
+                  අවලංගුයි
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5"
+                  className="px-4 py-1.5 bg-emerald-700 text-white font-bold text-xs uppercase hover:bg-emerald-800"
                 >
-                  <CheckCircle className="w-4 h-4" />
-                  <span>ණය පියවීම සටහන් කරන්න (Confirm Payment)</span>
+                  ගෙවීම සටහන් කරන්න (Confirm Repayment)
                 </button>
               </div>
             </form>
           )}
         </div>
+
+        {/* Footer */}
+        <div className="p-2.5 bg-slate-200 border-t border-slate-300 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 bg-slate-800 text-white font-bold text-xs uppercase hover:bg-slate-900"
+          >
+            වසන්න (Close / ESC)
+          </button>
+        </div>
       </div>
     </div>
   );
 };
-
