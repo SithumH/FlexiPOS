@@ -18,6 +18,9 @@ Unlike generic web-based templates that feel like modern mobile apps or AI mocku
 > **Core Philosophy:**  
 > *"A POS that adapts to the way Sri Lankan shops operate in reality—handling loose un-barcoded goods, digital ණය පොත (credit books), frequent power/internet cuts, and lightning-fast cashier keyboard input."*
 
+📖 **සම්පූර්ණ පරිශීලක අත්පොත (Full User Manual):**  
+වෙළඳසැල් හිමිකරුවන් සහ Cashiers ලා සඳහා වන පියවරෙන් පියවර පරිශීලක උපදෙස් අත්පොත [USER_MANUAL.md](./USER_MANUAL.md) වෙතින් ලබාගත හැක.
+
 ---
 
 ## 🖥️ Dual-Mode Execution: Web POS & Native Windows Desktop App
