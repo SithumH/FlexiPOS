@@ -1,200 +1,148 @@
 # FlexiPOS 🛒🇱🇰
-### *A Customizable, Offline-First POS Platform for Sri Lankan Small Businesses (Grocery First)*
+### *A Customizable, Offline-First Commercial Retail POS Platform for Sri Lankan Businesses (Grocery First)*
 
-[![License](https://img.shields.io/badge/License-Proprietary-blue.svg)](#)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20Desktop%20%7C%20Web%20POS-blue.svg)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Modular%20Monolith-orange.svg)](#)
-[![Offline](https://img.shields.io/badge/Offline--First-IndexedDB%20%2B%20Sync-green.svg)](#)
+[![Offline](https://img.shields.io/badge/Offline--First-IndexedDB%20%2B%20PostgreSQL-green.svg)](#)
+[![UI Style](https://img.shields.io/badge/UI-Traditional%20Retail%20Counter%20(No%20AI%20Gimmicks)-slate.svg)](#)
 [![Target Market](https://img.shields.io/badge/Market-Sri%20Lanka%20Retail-red.svg)](#)
 
 ---
 
 ## 📌 Executive Summary
 
-**FlexiPOS** is an enterprise-ready, customizable Point-of-Sale (POS) and retail management platform built specifically for small-to-medium retail businesses in Sri Lanka, starting with **grocery stores, boutique shops, and mini-marts**.
+**FlexiPOS** is a high-performance, commercial-grade Point-of-Sale (POS) and retail inventory platform built specifically for small-to-medium retail businesses in Sri Lanka, starting with **grocery stores (සිල්ලර කඩවල්), mini-marts, boutique shops, and wholesale counters**.
 
-Unlike rigid, generic legacy POS systems, FlexiPOS operates on a core philosophy:
-> **"A POS that adapts to the way each shop operates, instead of forcing every shop to work the same way."**
+Unlike generic web-based templates that feel like modern mobile apps or AI mockups, FlexiPOS is built around the **traditional, tactile, high-density desktop counter experience** that cashiers and store owners in Sri Lanka have trusted for decades (similar to NCR, Casio, Toshiba, and Invenova POS systems), enhanced with modern offline-first data sync and multi-tenant cloud capability.
+
+> **Core Philosophy:**  
+> *"A POS that adapts to the way Sri Lankan shops operate in reality—handling loose un-barcoded goods, digital ණය පොත (credit books), frequent power/internet cuts, and lightning-fast cashier keyboard input."*
+
+---
+
+## 🖥️ Dual-Mode Execution: Web POS & Native Windows Desktop App
+
+FlexiPOS runs simultaneously in two modes from a single unified codebase:
+
+1. **Native Windows Desktop POS App (`FlexiPOS.exe`)**:
+   - Built on Electron with custom CJS preloading and hardened IPC security.
+   - **Direct Hardware Integration:** Silent raw ESC/POS thermal receipt printing (58mm / 80mm USB & network printers) without OS print dialogue delays.
+   - **Offline Standalone Execution:** Instant launch from local disk without needing an active browser, internet connection, or external terminal process.
+   - **Native Window & Kiosk Controls:** True fullscreen cashier mode, minimize, maximize, and hardware cash-drawer kick support.
+
+2. **Web POS (Browser Mode)**:
+   - High-performance React 18 + Vite + TypeScript web interface accessible from tablets, secondary counters, or owner laptops via local LAN (`http://localhost:5173`).
+
+---
+
+## 🏪 Traditional Retail POS Interface (Zero AI Gimmicks)
+
+Sri Lankan shopkeepers and counter cashiers require high-contrast, anti-fatigue, structured interfaces rather than modern, bubbly mobile layouts. FlexiPOS features:
+
+```mermaid
+graph TD
+    subgraph POS_Terminal ["Traditional POS Cashier Counter Interface"]
+        VFD["📟 VFD / LED Digital Readout\n(High-visibility Monospace Net Total: රු. 2,450.00)"]
+        TabGrid["📋 Traditional Tabular Bill Grid\n(# | Item Description (සිංහල) | Unit | Rate | Qty [-][+] | Total | Del)"]
+        Hotkeys["⚡ Quick Touch Hotkeys & Tiles\n(Non-barcoded loose goods: පාන්, බිත්තර, සීනි, පරිප්පු)"]
+        WeightCalc["⚖️ Loose Item Weight & Rupee Calculator\n(Gram presets: 100g, 250g, 500g, 1Kg | Rupee presets: රු. 50, රු. 100, රු. 200)"]
+        FuncKeys["⌨️ Physical Function Keypad\n[F9: CASH PAY (Green)] | [F10: CARD (Blue)] | [F11: LankaQR (Purple)] | [F4: ණයට (Amber)] | [ESC: CLEAR (Red)]"]
+        StatusBar["📊 Desktop Status Strip\n(Ready | Counter #01 | Cashier: සුපුන් බණ්ඩාර | Shortcuts Legend | Live Clock)"]
+    end
+```
+
+### Key UI Features:
+1. **LED / VFD Customer Digital Display:** High-visibility green-on-black digital display showing active `NET TOTAL DUE`, item count, and tender change.
+2. **Tabular POS Invoice Grid:** Numbered lines, Sinhala/English titles, unit rates, quantity controls, and delete triggers.
+3. **Dedicated Loose Item Weight Engine ([WeightModal.tsx](file:///d:/project/Pos System/Genaral/src/client/components/WeightModal.tsx)):** Instant grams-to-rupees and rupees-to-grams reverse calculation (e.g., customer asks for "රු. 100 ක සීනි" or "පරිප්පු 250g").
+4. **Physical-Style Color Coded Action Keys:**
+   - **[F9 / PAY]:** Cash payment settlement with automatic change calculation.
+   - **[F10 / CARD]:** POS card machine integration.
+   - **[F11 / LankaQR]:** Dynamic LankaQR display for instant bank app payments (Commercial Bank, BOC, Sampath, Frimi, iPay, etc.).
+   - **[F4 / ණයට]:** Direct checkout to customer credit ledger.
+   - **[ESC / CLEAR]:** Void active bill with safety verification.
+5. **Traditional Counter PIN Pad Login:** Touch-enabled 0–9 physical keypad for cashier sign-in.
 
 ---
 
 ## 💼 Business & Commercial Model
 
-FlexiPOS follows a **Core Subscription + Paid Customization** SaaS model. Every customer shares a single, secure multi-tenant codebase with feature flags and dynamic configuration.
+FlexiPOS operates on a **Core SaaS Subscription + Paid Customization** model. Every merchant is provisioned within a secure multi-tenant environment with tenant isolation.
 
-```mermaid
-flowchart TD
-    CorePlatform["FlexiPOS Core Platform\n(Single Codebase / Multi-Tenant)"]
-    
-    SubBasic["Basic Plan\n(LKR 1,500 - 2,500 / mo)\nSingle counter, billing, inventory, basic reports"]
-    SubStandard["Standard Plan\n(LKR 3,000 - 5,000 / mo)\nSuppliers, ණය පොත, advanced reports, staff roles"]
-    SubCustom["Custom Enterprise\n(Custom Quotation)\nSpecial formats, custom integrations, dedicated support"]
-    
-    CorePlatform --> SubBasic
-    CorePlatform --> SubStandard
-    CorePlatform --> SubCustom
-    
-    Addons["Paid Add-on Modules & Configurations\n• Custom Invoice Layouts\n• External Hardware Integrations\n• Specialized Stock/Wholesale Logic"]
-    SubStandard -.-> Addons
-    SubCustom -.-> Addons
-```
-
-### Proposed Pricing Tiers
-
-| Tier | Monthly Fee (LKR) | Target Segment | Key Modules Included |
+| Tier | Monthly Fee (LKR) | Target Segment | Included Modules |
 | :--- | :--- | :--- | :--- |
-| **Basic** | **Rs. 1,500 – 2,500** | Small village grocery, single counter, 100–500 items | Fast billing, inventory tracking, basic daily sales, thermal receipts |
-| **Standard** | **Rs. 3,000 – 5,000** | Busy mini-mart, multiple staff, 1,000+ items | All Basic + **ණය පොත (Credit Ledger)**, Supplier management, Cashier shifts, Low stock alerts |
-| **Custom Business** | **Quotation Basis** | Multi-branch, wholesale + retail, custom workflows | Multi-branch sync, wholesale pricing tiers, custom reports, priority setup |
+| **Basic** | **Rs. 1,500 – 2,500** | Small village grocery, single counter, 100–500 items | Fast billing, inventory tracking, thermal receipts, basic daily sales |
+| **Standard** | **Rs. 3,000 – 5,000** | Busy mini-mart, multiple staff, 1,000+ items | All Basic + **ණය පොත (Credit Ledger)**, Supplier management, Cashier shifts, Low-stock alerts |
+| **Custom Enterprise** | **Quotation Basis** | Multi-branch, wholesale + retail, custom workflows | Multi-branch sync, wholesale dual pricing, custom reports, priority setup |
 
 ---
 
 ## 🔍 Sri Lankan Market Validation & Competitive Edge
 
-A comparative evaluation of existing solutions in the Sri Lankan market reveals clear opportunities:
-
-| Competitor | Public Features / Pricing | FlexiPOS Competitive Edge |
+| Competitor | Public Pricing | FlexiPOS Differentiator |
 | :--- | :--- | :--- |
-| **Invenova** | Stock, credit, supplier; Starter from Rs. 3,500/mo | Simpler UI, instant non-barcode touch items, zero setup friction |
-| **Vexel POS** | Offline, barcode, credit; Rs. 1,500/mo + Rs. 50,000 setup fee | **No heavy upfront setup fee**; runs on existing hardware/tablets |
-| **Sri Bill** | Billing, inventory, weighted items; Rs. 4,990/mo | Tailored specifically for Sri Lankan grocery workflows at half the entry price |
-| **Goko POS** | Sinhala/Tamil support, free plan advertised | Robust offline synchronization with strict multi-tenant security & audit logs |
-| **PosEx** | Offline-first, multi-device, inventory | Deep focus on digital **ණය පොත** + loose grocery weighing (සහල්/එළවළු) |
-
-### Key Differentiators:
-1. **Digital ණය පොත (Customer Credit Ledger):** Built directly into the checkout flow. No separate accounting software required.
-2. **Lightning Fast Loose/Weighted Item Entry:** Barcodes are not universal in Sri Lanka. One-touch hotkeys for un-barcoded goods (bread, eggs, bulk rice, sugar).
-3. **True Offline-First Architecture:** Uninterrupted sales during fiber/4G drops or power cuts. Data queues locally and synchronizes automatically with conflict prevention.
-4. **Low Hardware Barrier:** Runs cleanly on budget hardware (refurbished Core i3 laptops, Android tablets, 58mm/80mm USB/Bluetooth thermal printers).
-
----
-
-## 👥 Target Customer Segments
-
-```mermaid
-journey
-    title Customer Expansion Journey
-    section Tier A: Small Grocery Shops
-      1 Cashier / Owner operated: 5: Small Grocery
-      100 - 1,000 items (Rice, Spices, Loose goods): 5: Small Grocery
-      Paper ණය පොත replacement: 5: Small Grocery
-    section Tier B: Mini Marts & Self-Service
-      Barcode scanning & 2 Cashiers: 4: Mini Mart
-      Expiry date & supplier purchase orders: 4: Mini Mart
-      Cashier shift management (Z-Reports): 4: Mini Mart
-    section Tier C: Multi-Branch Chains
-      Central stock warehouse: 3: Multi-Branch
-      Inter-branch transfers: 3: Multi-Branch
-      Consolidated owner financial dashboard: 3: Multi-Branch
-```
-
-* **Tier A (Primary Launch Target):** Single-counter family grocers. Priority: Extreme simplicity, speed, credit book.
-* **Tier B (Scale Target):** Semi-modern mini-marts with barcode readers, multiple staff, and high inventory volume.
-* **Tier C (Future Horizon):** 2–5 branch local chains requiring consolidated stock and reporting.
-
----
-
-## 🚀 Product Scope & Feature Matrix
-
-### V1 — Essential Launch Scope
-* **POS Checkout:**
-  * Ultra-fast item search and barcode scanning.
-  * Quick-touch tiles for loose / non-barcoded items (පාන්, බිත්තර, සීනි, සහල්).
-  * Weighted item entry (price-per-kg with instant gram/kilogram calculation).
-  * Item-level and bill-level discounts.
-  * Split payments: Cash, Card, LankaQR, and **ණයට (Credit)**.
-  * Thermal receipt printing (58mm and 80mm ESC/POS format).
-* **Inventory & Stock Management:**
-  * Product catalogue (Barcode, Name, Category, Cost Price, Selling Price, Minimum Reorder Level).
-  * Stock-in (GRN) and manual stock adjustments (spoilage/damage).
-  * Low-stock warnings.
-* **Customer Management & ණය පොත (Credit Ledger):**
-  * Customer profile with credit limit and phone number.
-  * 1-click credit checkout with existing balance display.
-  * Partial credit repayment recording with instant updated balance.
-* **User Management & Security:**
-  * Role-Based Access Control (Admin / Owner, Cashier).
-  * Cashier shift closing (X/Z Report) with physical cash tally.
-* **Offline Billing Engine:**
-  * Uninterrupted sales when offline using IndexedDB.
-  * Auto-syncing background engine when internet returns.
-
-### V1.5 — Advanced Features
-* Expiry date tracking and near-expiry alerts.
-* Excel / CSV bulk product import & export.
-* Expense tracking (electricity, shop rent, tea/staff expenses).
-* Owner Mobile Dashboard (real-time sales from outside the shop).
-
-### V2 — Enterprise & Custom Modules
-* Multi-branch stock transfers.
-* Wholesale dual-pricing (Retail price vs. Wholesale / Box price).
-* SMS / WhatsApp payment reminders for credit customers.
-* IRD RAMIS compliance (Electronic VAT invoice integration).
+| **Invenova** | From Rs. 3,500/mo | Tactile keyboard hotkeys, instant loose weighing, zero-latency desktop offline engine |
+| **Vexel POS** | Rs. 1,500/mo + Rs. 50,000 setup fee | **No heavy upfront setup fee**; runs on existing shop PCs and laptops |
+| **Sri Bill** | Rs. 4,990/mo | Tailored specifically for Sri Lankan grocery workflows at half the entry price |
+| **PosEx** | Offline-first, inventory | Deep digital **ණය පොත** + loose grocery weighing (සහල්/එළවළු/සීනි) |
 
 ---
 
 ## 🏛️ System Architecture
 
-FlexiPOS is designed as a **Modular Monolith** with an **Offline-First Client Layer**.
+FlexiPOS is constructed as an **Offline-First Modular Monolith**:
 
 ```mermaid
 graph TB
-    subgraph ClientLayer ["Client Layer (Cashier POS / Owner Device)"]
-        UI["React + TypeScript + Tailwind CSS UI"]
-        State["Application State Manager"]
-        SyncClient["Offline Sync Engine (RxDB / Dexie.js)"]
-        LocalDB[("Local Storage\nIndexedDB")]
+    subgraph ClientLayer ["Client Layer (Desktop .exe / Browser)"]
+        UI["Traditional Retail POS UI (React + TypeScript)"]
+        WeightEngine["Loose Item Weight Calculator (WeightModal)"]
+        LocalDB[("IndexedDB Local Store\n(Dexie.js Table: products, customers, pendingOrders)")]
+        IPCBridge["Electron Safe IPC Bridge (preload.cjs)"]
         
-        UI <--> State
-        State <--> SyncClient
-        SyncClient <--> LocalDB
+        UI <--> WeightEngine
+        UI <--> LocalDB
+        UI <--> IPCBridge
     end
 
-    subgraph Transport ["Network Transport"]
-        HTTPS["Secure HTTPS / REST & WebSocket"]
+    subgraph DesktopHardware ["Hardware Peripherals"]
+        Printer["58mm / 80mm ESC-POS Thermal Printer"]
+        CashDrawer["Cash Drawer Kick (RJ11)"]
+        Scanner["USB / Bluetooth Barcode Scanner"]
+        
+        IPCBridge --> Printer
+        IPCBridge --> CashDrawer
+        Scanner --> UI
     end
 
-    subgraph BackendLayer ["Backend API (Node.js + Express + TypeScript)"]
-        Gateway["API Gateway & Auth / RBAC Middleware"]
-        TenantGuard["Multi-Tenant Boundary Guard\n(business_id isolation)"]
+    subgraph BackendAPI ["Backend Service (Node.js + Express + TypeScript)"]
+        Gateway["Security Gateway (Helmet, Rate Limiter, CORS)"]
+        AuthMiddleware["JWT Authentication & RBAC Guard"]
+        TenantGuard["Multi-Tenant Boundary Guard (Strict business_id Isolation)"]
         
-        subgraph Modules ["Modular Monolith Domain Services"]
-            BillingSvc["Billing & Orders Service"]
-            InventorySvc["Inventory & Stock Service"]
-            CreditSvc["Credit Ledger (ණය පොත) Service"]
-            SyncSvc["Sync & Conflict Resolution Engine"]
-            AuditSvc["Audit & Security Logging"]
+        subgraph DomainModules ["Domain Modules"]
+            OrdersMod["Orders & Billing Engine"]
+            ProductsMod["Inventory & Stock Movements"]
+            CustomersMod["Credit Ledger (ණය පොත) Engine"]
+            SyncMod["Idempotent Offline Sync Engine"]
         end
         
-        Gateway --> TenantGuard
-        TenantGuard --> Modules
+        Gateway --> AuthMiddleware --> TenantGuard --> DomainModules
     end
 
-    subgraph DatabaseLayer ["Database Layer"]
+    subgraph Storage ["Database Layer"]
         PG[("PostgreSQL Database\nRow-Level Partitioning via business_id")]
     end
 
-    SyncClient <==> HTTPS
-    HTTPS <==> Gateway
-    Modules <--> PG
+    LocalDB -.->|Batch Sync / HTTP| SyncMod
+    DomainModules <--> PG
 ```
-
-### Technology Stack
-
-| Layer | Technology | Justification |
-| :--- | :--- | :--- |
-| **Frontend UI** | **React (Vite) + TypeScript** | High performance, rapid rendering for fast typing cashiers |
-| **Styling** | **Tailwind CSS** | Clean, responsive UI tailored for both touchscreens & keyboards |
-| **Local Client DB** | **IndexedDB (via Dexie.js)** | Robust client-side database capable of holding 10,000+ cached items and pending sales |
-| **Backend Runtime** | **Node.js + Express (TypeScript)** | Lightweight, scalable, modular, and fast I/O |
-| **Database** | **PostgreSQL** | ACID-compliant transactional guarantees for financial ledgers and stock counts |
-| **Data Validation** | **Zod** | End-to-end type safety shared between client and server |
-| **Receipt Printing** | **Web Print API / ESC-POS** | Direct raw thermal printer integration (USB/Bluetooth/Network) |
 
 ---
 
-## 🗄️ Database Architecture & Entity Relationship Diagram (ERD)
+## 🗄️ Database Architecture & Multi-Tenancy
 
-All tables strictly enforce multi-tenancy via a foreign key `business_id`. 
+Every database table strictly enforces tenant isolation via `business_id` (UUIDv4).
 
 ```mermaid
 erDiagram
@@ -203,247 +151,120 @@ erDiagram
     BUSINESSES ||--o{ CATEGORIES : owns
     BUSINESSES ||--o{ CUSTOMERS : serves
     BUSINESSES ||--o{ ORDERS : records
-    BUSINESSES ||--o{ SUPPLIERS : purchases_from
-    
-    CATEGORIES ||--o{ PRODUCTS : categorizes
+    BUSINESSES ||--o{ SHIFTS : opens_closes
     
     CUSTOMERS ||--o{ CREDIT_TRANSACTIONS : has
     CUSTOMERS ||--o{ ORDERS : places
     
     ORDERS ||--o{ ORDER_ITEMS : contains
     PRODUCTS ||--o{ ORDER_ITEMS : ordered_in
-    
     PRODUCTS ||--o{ STOCK_MOVEMENTS : tracks
     USERS ||--o{ ORDERS : creates
-    USERS ||--o{ SHIFTS : opens_closes
-    
-    BUSINESSES {
-        uuid id PK
-        string name
-        string trade_name
-        string phone
-        string address
-        string currency
-        string tax_number
-        jsonb settings
-        timestamp created_at
-    }
-
-    USERS {
-        uuid id PK
-        uuid business_id FK
-        string full_name
-        string username
-        string password_hash
-        string role "ADMIN | MANAGER | CASHIER"
-        boolean is_active
-        timestamp created_at
-    }
-
-    CATEGORIES {
-        uuid id PK
-        uuid business_id FK
-        string name
-        string color_code
-        integer sort_order
-    }
-
-    PRODUCTS {
-        uuid id PK
-        uuid business_id FK
-        uuid category_id FK
-        string barcode
-        string name
-        string name_si
-        string unit "UNIT | KG | G | L"
-        decimal cost_price
-        decimal selling_price
-        decimal current_stock
-        decimal min_stock_alert
-        boolean is_quick_item
-        boolean is_active
-    }
-
-    CUSTOMERS {
-        uuid id PK
-        uuid business_id FK
-        string name
-        string phone
-        decimal credit_limit
-        decimal current_balance
-        timestamp created_at
-    }
-
-    CREDIT_TRANSACTIONS {
-        uuid id PK
-        uuid business_id FK
-        uuid customer_id FK
-        uuid order_id FK "nullable"
-        string type "DEBIT | CREDIT"
-        decimal amount
-        decimal balance_after
-        string notes
-        timestamp created_at
-    }
-
-    ORDERS {
-        uuid id PK
-        uuid business_id FK
-        uuid cashier_id FK
-        uuid customer_id FK "nullable"
-        string invoice_number
-        string payment_method "CASH | CARD | LANKAQR | CREDIT | SPLIT"
-        decimal subtotal
-        decimal discount
-        decimal total
-        decimal amount_paid
-        decimal change_given
-        string sync_status "PENDING | SYNCED"
-        uuid local_client_id
-        timestamp created_at
-    }
-
-    ORDER_ITEMS {
-        uuid id PK
-        uuid order_id FK
-        uuid product_id FK
-        string product_name
-        decimal quantity
-        decimal unit_price
-        decimal total_price
-    }
-
-    STOCK_MOVEMENTS {
-        uuid id PK
-        uuid business_id FK
-        uuid product_id FK
-        string movement_type "SALE | PURCHASE | ADJUSTMENT | RETURN"
-        decimal quantity_changed
-        decimal new_stock_level
-        string reason
-        timestamp created_at
-    }
 ```
 
 ---
 
-## 🔄 Offline Synchronization Protocol
+## 🔄 Idempotent Offline Synchronization Protocol
 
-To ensure sales never halt during network failures, FlexiPOS employs an **Append-Only Idempotent Sync Protocol**:
+1. **Client-Side UUIDv4 Generation:** Sales are generated with unique IDs on the local terminal (`localDb.pendingOrders`).
+2. **Instant Local Stock & Balance Deduction:** Cashiers experience 0-second billing latency; local stock and credit balances drop immediately.
+3. **Idempotent Upsert:** When connectivity restores, batch payloads sync via `POST /api/v1/sync/orders`. Conflicts are resolved with `ON CONFLICT (id) DO NOTHING`.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Cashier
-    participant UI as POS Terminal (Browser)
-    participant LocalDB as IndexedDB (Client)
-    participant SyncEng as Sync Engine
-    participant Server as Backend API
-    participant PG as PostgreSQL
+---
 
-    Cashier->>UI: Completes Sale (Cash / ණය)
-    UI->>LocalDB: Generate UUIDv4 Order ID
-    UI->>LocalDB: Save Order & Deduct Local Stock (Instant)
-    UI->>Cashier: Print Thermal Receipt (0s latency)
-    
-    alt Internet is Online
-        SyncEng->>LocalDB: Read Unsynced Orders Queue
-        SyncEng->>Server: POST /api/v1/sync/orders (Batch payload)
-        Server->>PG: Insert Order (ON CONFLICT id DO NOTHING)
-        Server->>PG: Record Stock Movement & Credit Update
-        Server-->>SyncEng: 200 OK (Acknowledged IDs)
-        SyncEng->>LocalDB: Mark Orders as SYNCED
-    else Internet is Down
-        SyncEng->>SyncEng: Backoff retry with exponential jitter
-        Note over UI,LocalDB: Cashier continues billing offline seamlessly
-    end
+## 🔒 Security Hardening & Penetration Testing
+
+- **Helmet Security Headers:** Content Security Policy, XSS filter, DNS prefetch control, and frame-guard enabled.
+- **Express Rate Limiting:** Brute-force protection on authentication and payment endpoints (100 reqs / 15 mins).
+- **Strict IDOR Mitigation:** All product and customer queries in `orders.service.ts` enforce composite tenant queries:
+  ```typescript
+  await tx.product.findFirst({ where: { id: item.productId, businessId } });
+  ```
+- **Sanitized Error Responses:** Stack traces and internal database errors are sanitized in production environments.
+
+---
+
+## 🚀 Running FlexiPOS
+
+### Prerequisites
+- Node.js 18+ & npm
+- PostgreSQL running locally or in cloud (Default: `127.0.0.1:5432`)
+
+### 1. Run Native Windows Desktop App (Standalone Executable)
+No terminal or development server required:
+```text
+release\win-unpacked\FlexiPOS.exe
 ```
 
-### Key Sync Guarantees:
-1. **Client-Side UUIDs:** Every transaction is tagged with a UUIDv4 on the terminal. Even if network packets retransmit, the server ignores duplicates using `ON CONFLICT (id) DO NOTHING`.
-2. **Immutable Ledgers:** Sales and credit repayments are append-only rows. They never overwrite past entries.
-3. **Optimistic Stock Deduction:** Local terminal inventory drops immediately for cashier awareness; reconciliation occurs when connected.
-
----
-
-## 🇱🇰 Sri Lankan Localizations & Regulatory Standards
-
-1. **Currency & Fractions:** Strict Sri Lankan Rupee formatting (`LKR` / `රු.`), rounding rules to 2 decimal places.
-2. **Sinhala & Tamil Script Ready:** Database fields support Unicode UTF-8 (`name_si`, `name_ta`) allowing receipt printing in native languages.
-3. **LankaQR Support:** Dynamic QR display on terminal or receipt allowing instant settlement via any Sri Lankan bank app (Commercial Bank, BOC, Sampath, Frimi, Genie, iPay).
-4. **Thermal Receipt Printing:** Tailored for low-cost 58mm (2-inch) and 80mm (3-inch) ESC/POS thermal printers.
-5. **IRD RAMIS Preparation:** Architecture leaves clean hook points for VAT-registered stores to interface with Inland Revenue Department (IRD) electronic VAT invoicing requirements.
-
----
-
-## 📅 Development Roadmap & Milestones
-
-```mermaid
-timeline
-    title FlexiPOS Execution Roadmap
-    Phase 1 : Market Validation & Persona Synthesis : Ground Research Complete
-    Phase 2 : Architecture & DB Schema : README & Design Specs Freezing
-    Phase 3 : Core POS Development : Authentication, Multi-tenant DB, Fast Billing Screen
-    Phase 4 : ණය පොත & Stock Module : Credit Ledger, Low-stock alerts, Receipts
-    Phase 5 : Offline Sync Engine : IndexedDB Queue, Conflict Resolution
-    Phase 6 : Pilot Store Deployment : 1-on-1 testing in a real grocery shop
-    Phase 7 : Commercial SaaS Release : Subscription billing, Onboarding, Packaging
-```
-
----
-
-## 🚀 Running FlexiPOS (Dual Mode: Web & Desktop App)
-
-FlexiPOS seamlessly supports both browser-based Web POS and standalone native Windows Desktop POS modes from the exact same codebase:
-
-### 1. Web POS Mode (Browser)
+### 2. Run Desktop App in Development Mode (Live Hot Reloading)
 ```powershell
-# Start React frontend in web browser (http://localhost:5173)
+npm run dev:electron
+```
+
+### 3. Run Web POS Mode (Browser)
+```powershell
+# Start Vite frontend (http://localhost:5173)
 npm run dev:client
 
-# Start backend modular monolith API server (http://localhost:5000/api/v1)
+# Start Express Backend API (http://localhost:5000)
 npm run dev:server
 ```
 
-### 2. Desktop POS Mode (Native Windows Application)
+### 4. Build & Package Executables
 ```powershell
-# Launch Desktop POS application in development with live reload
-npm run dev:electron
-
-# Build standalone portable Windows application (release/win-unpacked/FlexiPOS.exe)
+# Build standalone unpacked Windows application (release/win-unpacked/FlexiPOS.exe)
 npm run pack:desktop
 
-# Build complete Windows NSIS desktop installer (.exe)
+# Build complete Windows NSIS desktop installer
 npm run build:desktop
 ```
 
-*In Desktop mode, FlexiPOS unlocks native hardware capabilities such as direct silent ESC/POS thermal receipt printing, fullscreen kiosk mode, native window minimization/maximization, and offline local cache.*
+---
+
+## 🔑 Default Demo Credentials
+
+| Role | Username | Password / PIN | Permissions |
+| :--- | :--- | :--- | :--- |
+| **Cashier** | `cashier1` | `1234` | Billing, Barcode Scan, Weight Entry, Receipt Print, Credit Book selection |
+| **Shop Admin** | `owner` | `1234` | Inventory, Stock Adjustments, Credit Repayments, Sales History, Staff |
+| **Super Admin** | `superadmin` | `admin` | Tenant Shop onboarding, Plan allocation, Platform Master Control |
 
 ---
 
-## 🛠️ Project Structure
+## 📂 Project Structure
 
 ```text
 FlexiPOS/
-├── docs/                     # Specifications, architectural diagrams, API contracts
+├── release/                      # Packaged Windows Desktop Executable (win-unpacked/FlexiPOS.exe)
+├── prisma/                       # Prisma ORM schema & PostgreSQL migrations
 ├── src/
-│   ├── client/               # React + TypeScript + Tailwind POS UI
-│   │   ├── components/       # POS Billing, Numpad, Quick Tiles, Modals
-│   │   ├── hooks/            # useOfflineSync, useBarcodeScanner, useCart
-│   │   ├── db/               # Dexie.js IndexedDB schema & sync queues
-│   │   └── utils/            # ESC-POS receipt generator, LKR formatters
-│   ├── server/               # Node.js + Express + TypeScript Backend
-│   │   ├── modules/          # Business logic (billing, credit, stock, auth)
-│   │   ├── middleware/       # Tenant isolation, JWT auth, audit logging
-│   │   └── db/               # PostgreSQL connection & Prisma / DDL migrations
-│   └── shared/               # Shared TypeScript types, Zod schemas, constants
-├── README.md                 # Primary Master Documentation
-└── package.json              # Monorepo dependencies and scripts
+│   ├── client/                   # Traditional Retail POS Frontend (React + Vite + TypeScript)
+│   │   ├── components/           # Traditional Counter Components
+│   │   │   ├── CartTable.tsx     # Tabular Bill Grid + VFD Display + Physical Keypad
+│   │   │   ├── QuickItemTiles.tsx# Non-barcoded loose item touch buttons
+│   │   │   ├── ProductCatalog.tsx# Barcode scanning & search catalog
+│   │   │   ├── WeightModal.tsx   # Grams/Kg & Rupee reverse loose item calculator
+│   │   │   ├── CheckoutModal.tsx # Multi-tender settlement (Cash, Card, LankaQR, Credit)
+│   │   │   ├── CreditBookModal.tsx# Digital ණය පොත customer ledger & repayments
+│   │   │   ├── ReceiptModal.tsx  # Thermal receipt print preview (58mm/80mm)
+│   │   │   ├── Header.tsx        # Top Desktop Window Bar & Navigation Toolbar
+│   │   │   ├── admin/            # Shop Owner Back-office Panel
+│   │   │   ├── auth/             # Traditional Cashier Keypad Login Screen
+│   │   │   └── superadmin/       # Multi-Tenant SaaS Master Panel
+│   │   ├── db/                   # Dexie.js IndexedDB schema & sync queues
+│   │   └── i18n/                 # 1-Click Sinhala / English bilingual dictionary
+│   ├── desktop/                  # Electron Main Process & Preload Bridge
+│   │   ├── main.cjs              # Desktop lifecycle, hardware print handler, window state
+│   │   └── preload.cjs           # Secure context-bridge exposing window.electronAPI
+│   └── server/                   # Backend Modular Monolith API (Express + TypeScript)
+│       ├── modules/              # Domain services (auth, business, customers, orders, products, sync)
+│       └── middleware/           # TenantGuard, JWT RBAC, RateLimiter, ErrorHandler
+├── electron-builder.json         # Windows executable packaging configuration
+└── package.json                  # Project dependencies and operational scripts
 ```
 
 ---
 
 ## 📄 License & Commercial Distribution
 
-FlexiPOS is developed as a proprietary commercial software platform. All rights reserved. Custom configurations and core subscription licenses are governed under FlexiPOS commercial agreements.
-
+FlexiPOS is a proprietary commercial software platform developed for Sri Lankan retail enterprises. All rights reserved.
