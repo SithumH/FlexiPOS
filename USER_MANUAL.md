@@ -290,3 +290,4 @@ FlexiPOS මෘදුකාංගය නඩත්තු කරන ප්‍ර�
 
 *FlexiPOS - ශ්‍රී ලාංකේය සිල්ලර වෙළඳාමේ විශ්වාසනීය ඩිජිටල් සහකරු.*  
 *Copyright © 2026 FlexiPOS Retail Systems. All Rights Reserved.*
+
