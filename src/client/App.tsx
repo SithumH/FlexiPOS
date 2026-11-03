@@ -129,7 +129,7 @@ export const App: React.FC = () => {
     initDb();
 
     const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOffline = () => setIsOffline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
@@ -139,28 +139,40 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Keyboard Shortcuts for Cashier
+  // Keyboard Shortcuts (Global + Cashier)
   useEffect(() => {
-    if (!currentUser || activePanel !== 'CASHIER') return;
+    if (!currentUser) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Global navigation shortcuts
       if (e.key === 'F1') {
         e.preventDefault();
         setActivePanel('CASHIER');
-      } else if (e.key === 'F2') {
+        return;
+      }
+      if (e.key === 'F10' && (currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN')) {
         e.preventDefault();
-        searchInputRef.current?.focus();
-      } else if (e.key === 'F4') {
-        e.preventDefault();
-        setIsCreditBookOpen((prev) => !prev);
-      } else if (e.key === 'F9' || (e.code === 'Space' && (e.ctrlKey || e.metaKey))) {
-        e.preventDefault();
-        if (cart.length > 0) setIsCheckoutOpen(true);
-      } else if (e.key === 'Escape') {
-        setIsCheckoutOpen(false);
-        setIsCreditBookOpen(false);
-        setCompletedOrder(null);
-        setWeighingProduct(null);
+        setActivePanel('ADMIN');
+        return;
+      }
+
+      // Cashier specific shortcuts
+      if (activePanel === 'CASHIER') {
+        if (e.key === 'F2') {
+          e.preventDefault();
+          searchInputRef.current?.focus();
+        } else if (e.key === 'F4') {
+          e.preventDefault();
+          setIsCreditBookOpen((prev) => !prev);
+        } else if (e.key === 'F9' || (e.code === 'Space' && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          if (cart.length > 0) setIsCheckoutOpen(true);
+        } else if (e.key === 'Escape') {
+          setIsCheckoutOpen(false);
+          setIsCreditBookOpen(false);
+          setCompletedOrder(null);
+          setWeighingProduct(null);
+        }
       }
     };
 
@@ -182,6 +194,20 @@ export const App: React.FC = () => {
     };
     setProducts((prev) => [newProd, ...prev]);
     await localDb.products.put(newProd);
+  };
+
+  // Adjust Stock (+GRN / -Damage)
+  const handleAdjustStock = async (productId: string, quantityChange: number, reason: string) => {
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id === productId) {
+          const newStock = Math.max(0, p.currentStock + quantityChange);
+          localDb.products.update(productId, { currentStock: newStock });
+          return { ...p, currentStock: newStock };
+        }
+        return p;
+      })
+    );
   };
 
   // Item Selection (Triggers Weight Modal for loose items like rice, sugar, vegetables)
@@ -279,6 +305,7 @@ export const App: React.FC = () => {
       syncStatus: isOnline ? 'SYNCED' : 'PENDING'
     };
 
+    // Update Customer Credit Balance if credit sale
     if (isCredit && selectedCustomer) {
       const updatedBalance = selectedCustomer.currentBalance + total;
       const updatedCust = { ...selectedCustomer, currentBalance: updatedBalance };
@@ -289,6 +316,20 @@ export const App: React.FC = () => {
       await localDb.customers.put(updatedCust);
     }
 
+    // Decrement local inventory stock for sold items
+    setProducts((prev) =>
+      prev.map((p) => {
+        const itemInCart = cart.find((i) => i.product.id === p.id);
+        if (itemInCart) {
+          const updatedStock = Math.max(0, p.currentStock - itemInCart.quantity);
+          localDb.products.update(p.id, { currentStock: updatedStock });
+          return { ...p, currentStock: updatedStock };
+        }
+        return p;
+      })
+    );
+
+    // Save order in local DB
     await localDb.pendingOrders.put(newOrder);
     setOrders((prev) => [newOrder, ...prev]);
 
@@ -301,18 +342,49 @@ export const App: React.FC = () => {
     setCompletedOrder(newOrder);
   };
 
-  const handleRecordCreditPayment = async (customerId: string, amount: number) => {
+  // Record Credit Repayment (generates cash receipt & updates drawer)
+  const handleRecordCreditPayment = async (customerId: string, amount: number, notes?: string) => {
+    const cust = customers.find((c) => c.id === customerId);
+    if (!cust) return;
+
+    const newBal = Math.max(0, cust.currentBalance - amount);
+    const updatedCust = { ...cust, currentBalance: newBal };
+
     setCustomers((prev) =>
-      prev.map((c) => {
-        if (c.id === customerId) {
-          const newBal = Math.max(0, c.currentBalance - amount);
-          const updated = { ...c, currentBalance: newBal };
-          localDb.customers.put(updated);
-          return updated;
-        }
-        return c;
-      })
+      prev.map((c) => (c.id === customerId ? updatedCust : c))
     );
+    await localDb.customers.put(updatedCust);
+
+    // Record repayment in orders as a CASH transaction so the cash drawer matches
+    const repaymentOrder: OfflineOrderQueueItem = {
+      id: crypto.randomUUID ? crypto.randomUUID() : `pay-${Date.now()}`,
+      customerId: cust.id,
+      customerName: `${cust.name} (ණය පියවීම)`,
+      paymentMethod: 'CASH',
+      subtotal: amount,
+      discount: 0,
+      total: amount,
+      amountPaid: amount,
+      changeGiven: 0,
+      isCreditSale: false,
+      items: [
+        {
+          productId: 'credit-settlement',
+          productName: `ණය පියවීම / Settlement (${notes || 'මුදලින්'})`,
+          quantity: 1,
+          unitPrice: amount,
+          totalPrice: amount
+        }
+      ],
+      createdAt: new Date().toISOString(),
+      syncStatus: isOnline ? 'SYNCED' : 'PENDING'
+    };
+
+    await localDb.pendingOrders.put(repaymentOrder);
+    setOrders((prev) => [repaymentOrder, ...prev]);
+
+    // Show thermal receipt confirmation
+    setCompletedOrder(repaymentOrder);
   };
 
   const handleAddCustomer = async (custData: Omit<POSCustomer, 'id' | 'currentBalance'>) => {
@@ -417,6 +489,7 @@ export const App: React.FC = () => {
           onSaveSettings={handleSaveSettings}
           products={products}
           onAddProduct={handleAddProduct}
+          onAdjustStock={handleAdjustStock}
           customers={customers}
           onAddCustomer={handleAddCustomer}
           onRecordCreditPayment={handleRecordCreditPayment}
@@ -441,7 +514,7 @@ export const App: React.FC = () => {
           <span>•</span>
           <span>CASHIER: {currentUser.fullName}</span>
           <span>•</span>
-          <span className="text-amber-400">SHORTCUTS: [F2] Search | [F4] ණය පොත | [F9] Pay | [ESC] Clear</span>
+          <span className="text-amber-400">SHORTCUTS: [F1] POS | [F2] Search | [F4] ණය පොත | [F9] Pay | [F10] Admin | [ESC] Clear</span>
         </div>
         <div className="flex items-center space-x-3">
           <span className="text-slate-400">{new Date().toLocaleDateString()}</span>

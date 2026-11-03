@@ -40,6 +40,42 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
     });
   }, [products, searchTerm, selectedCategory]);
 
+  // Instant Barcode Scanner & Enter Key Handler
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const clean = searchTerm.trim().toLowerCase();
+      if (!clean) return;
+
+      // 1. Exact Barcode Match
+      const exactBarcode = products.find(
+        (p) => p.barcode && p.barcode.toLowerCase() === clean
+      );
+      if (exactBarcode) {
+        onSelectItem(exactBarcode);
+        setSearchTerm('');
+        return;
+      }
+
+      // 2. Exact Name Match
+      const exactName = products.find(
+        (p) => p.name.toLowerCase() === clean || (p.nameSi && p.nameSi.toLowerCase() === clean)
+      );
+      if (exactName) {
+        onSelectItem(exactName);
+        setSearchTerm('');
+        return;
+      }
+
+      // 3. Single Search Result
+      if (filteredProducts.length === 1) {
+        onSelectItem(filteredProducts[0]);
+        setSearchTerm('');
+        return;
+      }
+    }
+  };
+
   return (
     <div className="bg-slate-100 border-2 border-slate-400 p-2.5 flex flex-col h-full shadow-sm select-none overflow-hidden font-sans">
       {/* 1. SOLID BARCODE / ITEM SEARCH BAR */}
@@ -53,11 +89,12 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Barcode ස්කෑන් කරන්න හෝ භාණ්ඩයේ නම ලියන්න... [F2]"
-            className="w-full pl-8 pr-16 py-2 bg-white border-2 border-slate-300 text-slate-900 text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:border-amber-400 font-sans"
+            onKeyDown={handleKeyDown}
+            placeholder="Barcode ස්කෑන් කරන්න හෝ නම ලියන්න... [Enter to Add | F2 to Focus]"
+            className="w-full pl-8 pr-28 py-2 bg-white border-2 border-slate-300 text-slate-900 text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:border-amber-400 font-sans"
           />
           <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
-            <span className="text-[10px] font-mono font-bold bg-slate-200 text-slate-700 px-1.5 py-0.5 border border-slate-300">
+            <span className="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 border border-emerald-300">
               SCANNER READY
             </span>
           </div>

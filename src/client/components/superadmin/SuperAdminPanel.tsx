@@ -13,7 +13,8 @@ import {
   KeyRound,
   UserCheck,
   CheckCircle,
-  XCircle
+  XCircle,
+  X
 } from 'lucide-react';
 
 interface TenantShop {
@@ -162,7 +163,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ lang }) => {
     };
     setTenants((prev) => [newShop, ...prev]);
 
-    // Automatically create the initial Shop Admin account for this new shop
+    // Automatically create initial Shop Admin account for this new shop
     const newAdminAcc: UserAccount = {
       id: `usr-${Date.now()}`,
       fullName: newOwner,
@@ -173,7 +174,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ lang }) => {
       isActive: true,
       createdAt: new Date().toISOString().slice(0, 10)
     };
-    setAccounts((prev) => [...prev, newAdminAcc]);
+    setAccounts((prev) => [newAdminAcc, ...prev]);
 
     setNewShopName('');
     setNewOwner('');
@@ -184,14 +185,14 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ lang }) => {
   const handleAddAccount = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAccName || !newAccUser) return;
-    const shop = tenants.find((t) => t.id === newAccShopId);
+    const assignedShop = tenants.find((s) => s.id === newAccShopId);
     const newAcc: UserAccount = {
       id: `usr-${Date.now()}`,
       fullName: newAccName,
       username: newAccUser.toLowerCase().trim(),
       role: newAccRole,
       shopId: newAccShopId,
-      shopName: shop ? shop.nameSi : 'General',
+      shopName: assignedShop ? assignedShop.name : 'Shop',
       isActive: true,
       createdAt: new Date().toISOString().slice(0, 10)
     };
@@ -213,18 +214,20 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ lang }) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 min-h-0 overflow-y-auto p-6">
-      <div className="max-w-6xl w-full mx-auto space-y-6">
+    <div className="flex-1 flex flex-col bg-slate-100 min-h-0 overflow-y-auto p-4 font-sans select-none">
+      <div className="max-w-6xl w-full mx-auto space-y-4">
         {/* Top Header Banner */}
-        <div className="bg-slate-900 text-white p-6 rounded-2xl flex items-center justify-between shadow-sm">
+        <div className="bg-slate-900 text-white p-3.5 border-2 border-slate-700 flex items-center justify-between shadow-sm">
           <div className="flex items-center space-x-3">
-            <div className="bg-amber-600 p-2.5 rounded-xl">
-              <ShieldAlert className="w-6 h-6 text-white" />
+            <div className="bg-amber-600 p-2">
+              <ShieldAlert className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold">{t.superAdminTitle}</h2>
-              <p className="text-xs text-slate-400">
-                Super Admin Master: සියලුම කඩවල්, Admins සහ Cashiers පාලනය
+              <h2 className="text-sm font-black uppercase tracking-wide">
+                FLEXIPOS PLATFORM DEVELOPER MASTER (SUPER ADMIN)
+              </h2>
+              <p className="text-[11px] text-slate-400">
+                සියලුම වෙළඳසැල් (Tenant Stores), පැකේජ (Plans) සහ ගිණුම් කළමනාකරණය
               </p>
             </div>
           </div>
@@ -232,134 +235,132 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ lang }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowAddAccountModal(true)}
-              className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
+              className="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white px-3 py-1.5 text-xs font-bold uppercase flex items-center gap-1.5 transition"
             >
               <Users className="w-3.5 h-3.5 text-emerald-400" />
               <span>+ Add Admin / Cashier</span>
             </button>
             <button
               onClick={() => setShowAddModal(true)}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow"
+              className="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-1.5 text-xs font-bold uppercase flex items-center gap-1.5 shadow"
             >
               <Plus className="w-4 h-4" />
-              <span>{t.addNewShop}</span>
+              <span>+ නව කඩයක් ලියාපදිංචිය</span>
             </button>
           </div>
         </div>
 
         {/* 3 Key SaaS Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div className="bg-white p-3 border-2 border-slate-400 shadow-sm flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-slate-500 uppercase">{t.totalShops}</span>
-              <div className="text-2xl font-bold text-slate-900 mt-1">{tenants.length} Shops</div>
-              <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">{accounts.length} Total Users</p>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">ලියාපදිංචි කඩවල් ගණන</span>
+              <div className="text-2xl font-black font-mono text-slate-900 mt-0.5">{tenants.length} SHOPS</div>
+              <p className="text-[11px] text-emerald-700 font-semibold mt-0.5">{accounts.length} සක්‍රීය ගිණුම්</p>
             </div>
-            <Store className="w-8 h-8 text-slate-300" />
+            <Store className="w-8 h-8 text-slate-400 stroke-[1.5]" />
           </div>
 
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white p-3 border-2 border-slate-400 shadow-sm flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-slate-500 uppercase">{t.totalMonthlyRevenue}</span>
-              <div className="text-2xl font-bold text-emerald-700 mt-1">{formatLKR(totalMRR)}</div>
-              <p className="text-[11px] text-slate-400 mt-0.5">Monthly Recurring Revenue (MRR)</p>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">මාසික Recurring Revenue (MRR)</span>
+              <div className="text-2xl font-black font-mono text-emerald-800 mt-0.5">{formatLKR(totalMRR)}</div>
+              <p className="text-[11px] text-slate-500 mt-0.5">සම්පූර්ණ මාසික SaaS ආදායම</p>
             </div>
-            <CreditCard className="w-8 h-8 text-slate-300" />
+            <CreditCard className="w-8 h-8 text-emerald-600 stroke-[1.5]" />
           </div>
 
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white p-3 border-2 border-slate-400 shadow-sm flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-slate-500 uppercase">PostgreSQL Database</span>
-              <div className="text-2xl font-bold text-slate-900 mt-1">Connected</div>
-              <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">Port 5432 (Ready)</p>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">POSTGRESQL DATABASE</span>
+              <div className="text-2xl font-black font-mono text-slate-900 mt-0.5">CONNECTED</div>
+              <p className="text-[11px] text-emerald-700 font-semibold mt-0.5">Port 5432 (ACID Multi-Tenant)</p>
             </div>
-            <Activity className="w-8 h-8 text-emerald-500" />
+            <Activity className="w-8 h-8 text-sky-600 stroke-[1.5]" />
           </div>
         </div>
 
         {/* Sub-Tabs: SHOPS vs ALL ACCOUNTS */}
-        <div className="flex border-b border-slate-200 bg-white px-4 pt-2 rounded-t-xl">
+        <div className="flex border-b border-slate-300 bg-slate-200 px-2 pt-1.5 space-x-1">
           <button
             onClick={() => setActiveTab('SHOPS')}
-            className={`pb-2.5 px-4 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
+            className={`px-4 py-1.5 text-xs font-bold uppercase transition border-t border-l border-r ${
               activeTab === 'SHOPS'
-                ? 'border-emerald-600 text-emerald-800'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-white text-slate-900 border-slate-400 shadow-sm'
+                : 'bg-slate-300 text-slate-700 border-transparent hover:bg-slate-100'
             }`}
           >
-            <Store className="w-4 h-4" />
-            <span>ලියාපදිංචි කඩවල් ({tenants.length})</span>
+            🏢 ලියාපදිංචි කඩවල් ({tenants.length})
           </button>
           <button
             onClick={() => setActiveTab('ACCOUNTS')}
-            className={`pb-2.5 px-4 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
+            className={`px-4 py-1.5 text-xs font-bold uppercase transition border-t border-l border-r ${
               activeTab === 'ACCOUNTS'
-                ? 'border-emerald-600 text-emerald-800'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-white text-slate-900 border-slate-400 shadow-sm'
+                : 'bg-slate-300 text-slate-700 border-transparent hover:bg-slate-100'
             }`}
           >
-            <KeyRound className="w-4 h-4" />
-            <span>සියලුම Admins & Cashiers Logins ({accounts.length})</span>
+            👥 සියලුම Admins & Cashiers ගිණුම් ({accounts.length})
           </button>
         </div>
 
         {/* Tab 1: TENANT SHOPS */}
         {activeTab === 'SHOPS' && (
-          <div className="bg-white rounded-b-xl border border-t-0 border-slate-200 shadow-sm overflow-hidden">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-b border-slate-200">
+          <div className="bg-white border-2 border-slate-400 shadow-sm overflow-hidden">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-slate-800 text-slate-100 font-bold uppercase text-[11px] border-b border-slate-700">
                 <tr>
-                  <th className="p-3">{t.shopNameCol}</th>
-                  <th className="p-3">{t.ownerCol}</th>
-                  <th className="p-3">{t.planCol}</th>
-                  <th className="p-3 text-right">මාසික ගාස්තුව</th>
-                  <th className="p-3 text-center">Modules</th>
-                  <th className="p-3 text-center">{t.statusCol}</th>
+                  <th className="p-2 border-r border-slate-700">සාප්පුවේ නම (Tenant)</th>
+                  <th className="p-2 border-r border-slate-700">හිමිකරු (Owner)</th>
+                  <th className="p-2 border-r border-slate-700 text-center">පැකේජය (Plan)</th>
+                  <th className="p-2 border-r border-slate-700 text-right">මාසික ගාස්තුව</th>
+                  <th className="p-2 border-r border-slate-700 text-center">Modules</th>
+                  <th className="p-2 text-center">තත්වය</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200 font-sans">
                 {tenants.map((shop) => (
-                  <tr key={shop.id} className="hover:bg-slate-50">
-                    <td className="p-3">
+                  <tr key={shop.id} className="hover:bg-amber-50/70 even:bg-slate-50">
+                    <td className="p-2 border-r border-slate-200">
                       <span className="font-bold text-slate-900 block">{shop.nameSi || shop.name}</span>
-                      <span className="text-[11px] text-slate-400">ID: {shop.id} • Reg: {shop.registeredDate}</span>
+                      <span className="text-[11px] text-slate-500 font-mono">ID: {shop.id} • Reg: {shop.registeredDate}</span>
                     </td>
-                    <td className="p-3">
-                      <span className="font-semibold text-slate-800 block">{shop.ownerName}</span>
-                      <span className="text-[11px] text-slate-500">{shop.phone}</span>
+                    <td className="p-2 border-r border-slate-200">
+                      <span className="font-bold text-slate-800 block">{shop.ownerName}</span>
+                      <span className="text-[11px] text-slate-500 font-mono">{shop.phone}</span>
                     </td>
-                    <td className="p-3">
+                    <td className="p-2 border-r border-slate-200 text-center">
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        className={`px-2 py-0.5 border font-bold text-[10px] uppercase font-mono ${
                           shop.plan === 'BASIC'
-                            ? 'bg-slate-100 text-slate-700'
+                            ? 'bg-slate-100 text-slate-800 border-slate-300'
                             : shop.plan === 'STANDARD'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-purple-100 text-purple-800'
+                            ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                            : 'bg-purple-100 text-purple-900 border-purple-300'
                         }`}
                       >
                         {shop.plan}
                       </span>
                     </td>
-                    <td className="p-3 text-right font-bold text-slate-900">
+                    <td className="p-2 border-r border-slate-200 text-right font-mono font-bold text-slate-900">
                       {formatLKR(shop.monthlyFee)}
                     </td>
-                    <td className="p-3 text-center">
-                      <div className="flex justify-center gap-1 text-[10px]">
+                    <td className="p-2 border-r border-slate-200 text-center">
+                      <div className="flex justify-center gap-1 text-[10px] font-bold font-mono">
                         {shop.creditBookEnabled && (
-                          <span className="bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded font-semibold">
-                            ණය
+                          <span className="bg-amber-100 text-amber-900 px-1 border border-amber-300">
+                            ණය පොත
                           </span>
                         )}
                         {shop.multiCashierEnabled && (
-                          <span className="bg-blue-100 text-blue-900 px-1.5 py-0.2 rounded font-semibold">
-                            Multi
+                          <span className="bg-sky-100 text-sky-900 px-1 border border-sky-300">
+                            Multi-Counter
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="p-3 text-center">
-                      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold">
+                    <td className="p-2 text-center">
+                      <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 font-bold text-[10px] uppercase font-mono">
                         {shop.status}
                       </span>
                     </td>
@@ -370,71 +371,62 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ lang }) => {
           </div>
         )}
 
-        {/* Tab 2: ALL ACCOUNTS MANAGEMENT (Admins & Cashiers) */}
+        {/* Tab 2: ALL ACCOUNTS & LOGINS */}
         {activeTab === 'ACCOUNTS' && (
-          <div className="bg-white rounded-b-xl border border-t-0 border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center text-xs">
-              <span className="text-slate-600 font-medium">
-                Super Admin හට ඕනෑම කඩයක Admin හෝ Cashier ගිණුම් කළමනාකරණය සහ Password Reset කළ හැක.
-              </span>
-            </div>
-
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-b border-slate-200">
+          <div className="bg-white border-2 border-slate-400 shadow-sm overflow-hidden">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-slate-800 text-slate-100 font-bold uppercase text-[11px] border-b border-slate-700">
                 <tr>
-                  <th className="p-3">නම සහ Username</th>
-                  <th className="p-3">Role</th>
-                  <th className="p-3">අයත් සාප්පුව</th>
-                  <th className="p-3 text-center">Status</th>
-                  <th className="p-3 text-center">Actions</th>
+                  <th className="p-2 border-r border-slate-700">නම (Staff Name)</th>
+                  <th className="p-2 border-r border-slate-700">Username</th>
+                  <th className="p-2 border-r border-slate-700 text-center">භූමිකාව (Role)</th>
+                  <th className="p-2 border-r border-slate-700">අයත් සාප්පුව (Store)</th>
+                  <th className="p-2 border-r border-slate-700 text-center">තත්වය</th>
+                  <th className="p-2 text-center">ක්‍රියාමාර්ග</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200 font-sans">
                 {accounts.map((acc) => (
-                  <tr key={acc.id} className="hover:bg-slate-50">
-                    <td className="p-3">
-                      <span className="font-bold text-slate-900 block">{acc.fullName}</span>
-                      <span className="font-mono text-slate-500 text-[11px]">@{acc.username}</span>
-                    </td>
-                    <td className="p-3">
+                  <tr key={acc.id} className="hover:bg-amber-50/70 even:bg-slate-50">
+                    <td className="p-2 border-r border-slate-200 font-bold text-slate-900">{acc.fullName}</td>
+                    <td className="p-2 border-r border-slate-200 font-mono font-bold text-emerald-800">@{acc.username}</td>
+                    <td className="p-2 border-r border-slate-200 text-center">
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        className={`px-2 py-0.5 border font-bold text-[10px] uppercase font-mono ${
                           acc.role === 'ADMIN'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-sky-100 text-sky-900 border-sky-300'
+                            : 'bg-emerald-100 text-emerald-900 border-emerald-300'
                         }`}
                       >
                         {acc.role}
                       </span>
                     </td>
-                    <td className="p-3 text-slate-700 font-medium">
-                      {acc.shopName || '-'}
-                    </td>
-                    <td className="p-3 text-center">
+                    <td className="p-2 border-r border-slate-200 text-slate-700">{acc.shopName}</td>
+                    <td className="p-2 border-r border-slate-200 text-center">
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        className={`px-2 py-0.5 border font-bold text-[10px] uppercase font-mono ${
                           acc.isActive
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-rose-50 text-rose-700'
+                            ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                            : 'bg-rose-100 text-rose-900 border-rose-300'
                         }`}
                       >
-                        {acc.isActive ? 'Active' : 'Suspended'}
+                        {acc.isActive ? 'ACTIVE' : 'DISABLED'}
                       </span>
                     </td>
-                    <td className="p-3 text-center space-x-2">
+                    <td className="p-1.5 text-center space-x-1">
                       <button
                         onClick={() => handleResetPassword(acc.username)}
-                        className="text-xs text-amber-700 hover:underline font-semibold"
+                        className="bg-slate-700 hover:bg-slate-800 text-white px-2 py-0.5 text-[10px] font-bold uppercase"
                       >
-                        Reset PIN/Pass
+                        Reset PW
                       </button>
                       <button
                         onClick={() => handleToggleAccountStatus(acc.id)}
-                        className={`text-xs font-semibold ${
-                          acc.isActive ? 'text-rose-600 hover:underline' : 'text-emerald-600 hover:underline'
+                        className={`px-2 py-0.5 text-[10px] font-bold uppercase text-white ${
+                          acc.isActive ? 'bg-rose-700 hover:bg-rose-800' : 'bg-emerald-700 hover:bg-emerald-800'
                         }`}
                       >
-                        {acc.isActive ? 'Suspend' : 'Activate'}
+                        {acc.isActive ? 'Disable' : 'Enable'}
                       </button>
                     </td>
                   </tr>
@@ -445,153 +437,163 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ lang }) => {
         )}
       </div>
 
-      {/* Add New Shop Modal */}
+      {/* Modal: Add Tenant Shop */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <form onSubmit={handleAddShop} className="bg-white p-6 rounded-2xl max-w-md w-full space-y-3">
-            <h4 className="font-bold text-sm text-slate-900 border-b pb-2">අලුත් සාප්පුවක් ලියාපදිංචි කිරීම</h4>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">සාප්පුවේ නම:</label>
-              <input
-                type="text"
-                required
-                placeholder="උදා: ජයසිරි ග්‍රොසරි"
-                value={newShopName}
-                onChange={(e) => setNewShopName(e.target.value)}
-                className="w-full px-3 py-1.5 border rounded-lg text-xs"
-              />
+        <div className="fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-3">
+          <form onSubmit={handleAddShop} className="bg-white border-2 border-slate-700 shadow-2xl max-w-md w-full overflow-hidden text-xs">
+            <div className="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between border-b border-slate-700">
+              <h3 className="font-bold text-sm uppercase">නව සාප්පුවක් ලියාපදිංචි කිරීම (NEW SHOP)</h3>
+              <button type="button" onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">අයිතිකරුගේ නම:</label>
-              <input
-                type="text"
-                required
-                placeholder="උදා: කේ. ජයසිරි"
-                value={newOwner}
-                onChange={(e) => setNewOwner(e.target.value)}
-                className="w-full px-3 py-1.5 border rounded-lg text-xs"
-              />
+
+            <div className="p-4 space-y-3 bg-slate-50">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">සාප්පුවේ නම (Store Name) *:</label>
+                <input
+                  type="text"
+                  required
+                  value={newShopName}
+                  onChange={(e) => setNewShopName(e.target.value)}
+                  placeholder="e.g. නිමල් ස්ටෝර්ස්"
+                  className="w-full px-2.5 py-1.5 border border-slate-300 font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">හිමිකරුගේ නම (Owner Full Name) *:</label>
+                <input
+                  type="text"
+                  required
+                  value={newOwner}
+                  onChange={(e) => setNewOwner(e.target.value)}
+                  placeholder="e.g. නිමල් පෙරේරා"
+                  className="w-full px-2.5 py-1.5 border border-slate-300 font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">දුරකථන අංකය (Phone Number):</label>
+                <input
+                  type="tel"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  placeholder="077..."
+                  className="w-full px-2.5 py-1.5 border border-slate-300 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">තෝරාගත් Plan එක (Subscription Tier):</label>
+                <select
+                  value={newPlan}
+                  onChange={(e) => setNewPlan(e.target.value as any)}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 font-semibold bg-white"
+                >
+                  <option value="BASIC">Basic (Rs. 1,500/mo) - Single Counter</option>
+                  <option value="STANDARD">Standard (Rs. 3,500/mo) - Multi-Counter + ණය පොත</option>
+                  <option value="CUSTOM">Custom Enterprise (Rs. 7,500/mo)</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">දුරකථන අංකය:</label>
-              <input
-                type="tel"
-                required
-                placeholder="0771234567"
-                value={newPhone}
-                onChange={(e) => setNewPhone(e.target.value)}
-                className="w-full px-3 py-1.5 border rounded-lg text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Subscription Plan:</label>
-              <select
-                value={newPlan}
-                onChange={(e) => setNewPlan(e.target.value as any)}
-                className="w-full px-3 py-1.5 border rounded-lg text-xs font-semibold"
-              >
-                <option value="BASIC">Basic Plan (රු. 1,500/month)</option>
-                <option value="STANDARD">Standard Plan (රු. 3,500/month)</option>
-                <option value="CUSTOM">Custom Enterprise (රු. 7,500+/month)</option>
-              </select>
-            </div>
-            <div className="flex justify-end gap-2 pt-3 border-t">
+
+            <div className="p-3 bg-slate-200 border-t border-slate-300 flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="px-3 py-1.5 text-xs text-slate-600 border rounded-lg"
+                className="px-4 py-1.5 border border-slate-400 text-slate-700 font-bold uppercase hover:bg-slate-100"
               >
-                Cancel
+                අවලංගුයි
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg"
+                className="px-5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold uppercase shadow"
               >
-                Create Shop Tenant
+                ලියාපදිංචි කරන්න
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Add New User Account Modal (Super Admin feature) */}
+      {/* Modal: Add Account */}
       {showAddAccountModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <form onSubmit={handleAddAccount} className="bg-white p-6 rounded-2xl max-w-md w-full space-y-3">
-            <h4 className="font-bold text-sm text-slate-900 border-b pb-2">අලුත් User Account එකක් හැදීම</h4>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">සම්පූර්ණ නම (Full Name):</label>
-              <input
-                type="text"
-                required
-                value={newAccName}
-                onChange={(e) => setNewAccName(e.target.value)}
-                placeholder="උදා: අජිත් කුමාර"
-                className="w-full px-3 py-1.5 border rounded-lg text-xs"
-              />
+        <div className="fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-3">
+          <form onSubmit={handleAddAccount} className="bg-white border-2 border-slate-700 shadow-2xl max-w-md w-full overflow-hidden text-xs">
+            <div className="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between border-b border-slate-700">
+              <h3 className="font-bold text-sm uppercase">නව පරිශීලක ගිණුමක් සෑදීම (NEW USER)</h3>
+              <button type="button" onClick={() => setShowAddAccountModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Username:</label>
-              <input
-                type="text"
-                required
-                value={newAccUser}
-                onChange={(e) => setNewAccUser(e.target.value)}
-                placeholder="උදා: ajith"
-                className="w-full px-3 py-1.5 border rounded-lg text-xs"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
+
+            <div className="p-4 space-y-3 bg-slate-50">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Role:</label>
-                <select
-                  value={newAccRole}
-                  onChange={(e) => setNewAccRole(e.target.value as any)}
-                  className="w-full px-3 py-1.5 border rounded-lg text-xs font-semibold"
-                >
-                  <option value="ADMIN">Shop Admin (මුදලාලි)</option>
-                  <option value="CASHIER">Cashier (කවුන්ටරය)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">සාප්පුව (Shop):</label>
+                <label className="block font-bold text-slate-700 mb-1">අයත් සාප්පුව (Store) *:</label>
                 <select
                   value={newAccShopId}
                   onChange={(e) => setNewAccShopId(e.target.value)}
-                  className="w-full px-3 py-1.5 border rounded-lg text-xs"
+                  className="w-full px-2.5 py-1.5 border border-slate-300 font-semibold bg-white"
                 >
-                  {tenants.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.nameSi || t.name}
+                  {tenants.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.ownerName})
                     </option>
                   ))}
                 </select>
               </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">සම්පූර්ණ නම (Full Name) *:</label>
+                <input
+                  type="text"
+                  required
+                  value={newAccName}
+                  onChange={(e) => setNewAccName(e.target.value)}
+                  placeholder="e.g. කසුන් බණ්ඩාර"
+                  className="w-full px-2.5 py-1.5 border border-slate-300 font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Username (Login නාමය) *:</label>
+                <input
+                  type="text"
+                  required
+                  value={newAccUser}
+                  onChange={(e) => setNewAccUser(e.target.value)}
+                  placeholder="e.g. cashier2"
+                  className="w-full px-2.5 py-1.5 border border-slate-300 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">භූමිකාව (Role) *:</label>
+                <select
+                  value={newAccRole}
+                  onChange={(e) => setNewAccRole(e.target.value as any)}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 font-semibold bg-white"
+                >
+                  <option value="CASHIER">CASHIER (කවුන්ටරයේ විකුණුම් පමණි)</option>
+                  <option value="ADMIN">ADMIN (කඩේ කළමනාකරු / Owner)</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Password / PIN:</label>
-              <input
-                type="password"
-                required
-                value={newAccPass}
-                onChange={(e) => setNewAccPass(e.target.value)}
-                placeholder="••••••"
-                className="w-full px-3 py-1.5 border rounded-lg text-xs"
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-3 border-t">
+
+            <div className="p-3 bg-slate-200 border-t border-slate-300 flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={() => setShowAddAccountModal(false)}
-                className="px-3 py-1.5 text-xs text-slate-600 border rounded-lg"
+                className="px-4 py-1.5 border border-slate-400 text-slate-700 font-bold uppercase hover:bg-slate-100"
               >
-                Cancel
+                අවලංගුයි
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg"
+                className="px-5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold uppercase shadow"
               >
-                Create Account
+                ගිණුම සකසන්න
               </button>
             </div>
           </form>
