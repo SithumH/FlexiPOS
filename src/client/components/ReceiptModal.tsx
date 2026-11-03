@@ -19,8 +19,15 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
 }) => {
   if (!isOpen || !order) return null;
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    if (typeof window !== 'undefined' && window.electronAPI?.isDesktop) {
+      await window.electronAPI.printReceipt({
+        silent: settings.autoPrintReceipt ?? false,
+        paperSize: settings.receiptPaperSize
+      });
+    } else {
+      window.print();
+    }
   };
 
   const is58mm = settings.receiptPaperSize === '58mm';

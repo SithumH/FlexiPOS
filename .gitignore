@@ -1,9 +1,10 @@
 node_modules/
 dist/
+dist-electron/
+release/
 build/
 .env
 *.log
 .DS_Store
 coverage/
 .prisma/
-

@@ -392,6 +392,35 @@ timeline
 
 ---
 
+## 🚀 Running FlexiPOS (Dual Mode: Web & Desktop App)
+
+FlexiPOS seamlessly supports both browser-based Web POS and standalone native Windows Desktop POS modes from the exact same codebase:
+
+### 1. Web POS Mode (Browser)
+```powershell
+# Start React frontend in web browser (http://localhost:5173)
+npm run dev:client
+
+# Start backend modular monolith API server (http://localhost:5000/api/v1)
+npm run dev:server
+```
+
+### 2. Desktop POS Mode (Native Windows Application)
+```powershell
+# Launch Desktop POS application in development with live reload
+npm run dev:electron
+
+# Build standalone portable Windows application (release/win-unpacked/FlexiPOS.exe)
+npm run pack:desktop
+
+# Build complete Windows NSIS desktop installer (.exe)
+npm run build:desktop
+```
+
+*In Desktop mode, FlexiPOS unlocks native hardware capabilities such as direct silent ESC/POS thermal receipt printing, fullscreen kiosk mode, native window minimization/maximization, and offline local cache.*
+
+---
+
 ## 🛠️ Project Structure
 
 ```text
