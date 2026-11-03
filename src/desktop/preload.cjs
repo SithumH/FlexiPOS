@@ -16,3 +16,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeWindow: () => ipcRenderer.send('pos:window-action', 'close'),
   toggleFullscreen: () => ipcRenderer.send('pos:window-action', 'fullscreen')
 });
+

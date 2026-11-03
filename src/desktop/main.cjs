@@ -1,9 +1,10 @@
 const { app, BrowserWindow, ipcMain, Menu, shell } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 let mainWindow = null;
 
-const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+const isDev = process.env.NODE_ENV === 'development' || (!app.isPackaged && process.argv.includes('--dev'));
 
 function createMainWindow() {
   mainWindow = new BrowserWindow({
@@ -22,17 +23,43 @@ function createMainWindow() {
     }
   });
 
-  // Load URL
+  const distPath = path.join(__dirname, '../../dist/index.html');
+
+  // Forward renderer console logs to terminal
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    console.log(`[Renderer] ${message}`);
+  });
+
+  // Handle load failure: auto fallback to local dist/index.html if dev server is unreachable
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.warn(`[Electron] Failed to load ${validatedURL}: ${errorDescription} (${errorCode})`);
+    if (fs.existsSync(distPath) && !validatedURL.includes('index.html')) {
+      console.log('[Electron] Dev server unreachable. Falling back to local dist/index.html...');
+      mainWindow.loadFile(distPath);
+    }
+  });
+
+  // Load URL or File
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
-    // Open DevTools in dev mode with F12
+    console.log('[Electron] Running in Development Mode -> loading http://127.0.0.1:5173');
+    mainWindow.loadURL('http://127.0.0.1:5173').catch(() => {
+      if (fs.existsSync(distPath)) {
+        console.log('[Electron] Falling back to local dist/index.html');
+        mainWindow.loadFile(distPath);
+      }
+    });
+
+    // F12 toggles DevTools
     mainWindow.webContents.on('before-input-event', (event, input) => {
       if (input.key === 'F12' && input.type === 'keyDown') {
         mainWindow.webContents.toggleDevTools();
       }
     });
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));
+    console.log('[Electron] Running in Production Mode -> loading:', distPath);
+    mainWindow.loadFile(distPath).catch((err) => {
+      console.error('[Electron] Failed to load production dist/index.html:', err);
+    });
   }
 
   // Handle external link clicks
